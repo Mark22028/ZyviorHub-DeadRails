@@ -1,0 +1,2010 @@
+-- Services
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local CoreGui = game:GetService("CoreGui")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
+
+-- Variables
+local Player = Players.LocalPlayer
+local Mouse = Player:GetMouse()
+task.wait(1) -- short wait to ensure PlaceId is loaded properly
+
+local validDeadRailsIds = {
+    133377094302868,
+    70876832253163,
+    116495829188952
+}
+
+local currentPlaceId = tonumber(game.PlaceId)
+
+if not table.find(validDeadRailsIds, currentPlaceId) then
+    -- Create purple blur screen if not in Dead Rails
+    local NotInGameGui = Instance.new("ScreenGui")
+    NotInGameGui.Name = "NotInGameGui"
+    NotInGameGui.ResetOnSpawn = false
+    NotInGameGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    
+    -- Check if we should use PlayerGui or CoreGui
+    if syn and syn.protect_gui then
+        syn.protect_gui(NotInGameGui)
+        NotInGameGui.Parent = CoreGui
+    elseif gethui then
+        NotInGameGui.Parent = gethui()
+    else
+        NotInGameGui.Parent = CoreGui
+    end
+    
+    -- Create blur frame
+    local BlurFrame = Instance.new("Frame")
+    BlurFrame.Name = "BlurFrame"
+    BlurFrame.Size = UDim2.new(1, 0, 1, 0)
+    BlurFrame.Position = UDim2.new(0, 0, 0, 0)
+    BlurFrame.BackgroundColor3 = Color3.fromRGB(76, 0, 153)
+    BlurFrame.BackgroundTransparency = 0.7
+    BlurFrame.BorderSizePixel = 0
+    BlurFrame.Parent = NotInGameGui
+    
+    -- Create warning text
+    local WarningText = Instance.new("TextLabel")
+    WarningText.Name = "WarningText"
+    WarningText.Size = UDim2.new(0, 400, 0, 100)
+    WarningText.Position = UDim2.new(0.5, -200, 0.5, -50)
+    WarningText.BackgroundTransparency = 1
+    WarningText.Text = "Make Sure You're On Dead Rails!"
+    WarningText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    WarningText.Font = Enum.Font.GothamBold
+    WarningText.TextSize = 28
+    WarningText.Parent = BlurFrame
+    
+    -- Animate the warning text
+    WarningText.TextTransparency = 1
+    TweenService:Create(WarningText, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
+        TextTransparency = 0
+    }):Play()
+    
+    -- Remove the GUI after 10 seconds
+    task.delay(10, function()
+        TweenService:Create(WarningText, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.In), {
+            TextTransparency = 1
+        }):Play()
+        
+        TweenService:Create(BlurFrame, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.In), {
+            BackgroundTransparency = 1
+        }):Play()
+        
+        task.wait(1)
+        NotInGameGui:Destroy()
+    end)
+    
+    return
+end
+
+-- GUI Creation
+local ZyviorHub = Instance.new("ScreenGui")
+ZyviorHub.Name = "ZyviorHub_DeadRails"
+ZyviorHub.ResetOnSpawn = false
+ZyviorHub.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+-- Check if we should use PlayerGui or CoreGui
+if syn and syn.protect_gui then
+    syn.protect_gui(ZyviorHub)
+    ZyviorHub.Parent = CoreGui
+elseif gethui then
+    ZyviorHub.Parent = gethui()
+else
+    ZyviorHub.Parent = CoreGui
+end
+
+-- Create main frame with gradient
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 400, 0, 300)
+MainFrame.Position = UDim2.new(0.5, -200, 0.5, -150)
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ZyviorHub
+
+-- Super duper ultra ultimate smooth rounded corners
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 15)
+UICorner.Parent = MainFrame
+
+-- Create glow effect
+local GlowEffect = Instance.new("ImageLabel")
+GlowEffect.Name = "GlowEffect"
+GlowEffect.BackgroundTransparency = 1
+GlowEffect.Position = UDim2.new(0.5, -250, 0.5, -250)
+GlowEffect.Size = UDim2.new(0, 500, 0, 500)
+GlowEffect.Image = "rbxassetid://5028857084" -- Radial gradient
+GlowEffect.ImageColor3 = Color3.fromRGB(255, 255, 255)
+GlowEffect.ImageTransparency = 0.8
+GlowEffect.ZIndex = 0
+GlowEffect.Parent = MainFrame
+
+-- Create pulse animation for glow
+local function createPulseAnimation()
+    local tweenInfo = TweenInfo.new(
+        2, -- Time
+        Enum.EasingStyle.Sine, -- Easing style
+        Enum.EasingDirection.InOut, -- Easing direction
+        -1, -- Repeat count (-1 means loop forever)
+        true, -- Reverses
+        0 -- Delay time
+    )
+    
+    local tween = TweenService:Create(GlowEffect, tweenInfo, {
+        ImageTransparency = 0.7,
+        Size = UDim2.new(0, 520, 0, 520)
+    })
+    
+    tween:Play()
+end
+
+createPulseAnimation()
+
+-- Create title bar
+local TitleBar = Instance.new("Frame")
+TitleBar.Name = "TitleBar"
+TitleBar.Size = UDim2.new(1, 0, 0, 40)
+TitleBar.Position = UDim2.new(0, 0, 0, 0)
+TitleBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+TitleBar.BorderSizePixel = 0
+TitleBar.ZIndex = 2
+TitleBar.Parent = MainFrame
+
+-- Round the title bar corners
+local TitleCorner = Instance.new("UICorner")
+TitleCorner.CornerRadius = UDim.new(0, 15)
+TitleCorner.Parent = TitleBar
+
+-- Fix for title bar corners (to make only top corners round)
+local TitleBarFix = Instance.new("Frame")
+TitleBarFix.Name = "TitleBarFix"
+TitleBarFix.Size = UDim2.new(1, 0, 0, 20)
+TitleBarFix.Position = UDim2.new(0, 0, 0.5, 0)
+TitleBarFix.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+TitleBarFix.BorderSizePixel = 0
+TitleBarFix.ZIndex = 2
+TitleBarFix.Parent = TitleBar
+
+-- Create title text
+local TitleText = Instance.new("TextLabel")
+TitleText.Name = "TitleText"
+TitleText.Size = UDim2.new(1, -100, 1, 0)
+TitleText.Position = UDim2.new(0, 15, 0, 0)
+TitleText.BackgroundTransparency = 1
+TitleText.Text = "ZyviorHub | Dead Rails"
+TitleText.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleText.Font = Enum.Font.GothamBold
+TitleText.TextSize = 18
+TitleText.TextXAlignment = Enum.TextXAlignment.Left
+TitleText.ZIndex = 3
+TitleText.Parent = TitleBar
+
+-- Create minimize button
+local MinimizeButton = Instance.new("TextButton")
+MinimizeButton.Name = "MinimizeButton"
+MinimizeButton.Size = UDim2.new(0, 30, 0, 30)
+MinimizeButton.Position = UDim2.new(1, -70, 0, 5)
+MinimizeButton.BackgroundTransparency = 1
+MinimizeButton.Text = "-"
+MinimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinimizeButton.Font = Enum.Font.GothamBold
+MinimizeButton.TextSize = 24
+MinimizeButton.ZIndex = 3
+MinimizeButton.Parent = TitleBar
+
+-- Create close button
+local CloseButton = Instance.new("TextButton")
+CloseButton.Name = "CloseButton"
+CloseButton.Size = UDim2.new(0, 30, 0, 30)
+CloseButton.Position = UDim2.new(1, -35, 0, 5)
+CloseButton.BackgroundTransparency = 1
+CloseButton.Text = "x"
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.Font = Enum.Font.GothamBold
+CloseButton.TextSize = 24
+CloseButton.ZIndex = 3
+CloseButton.Parent = TitleBar
+
+-- Create content frame
+local ContentFrame = Instance.new("Frame")
+ContentFrame.Name = "ContentFrame"
+ContentFrame.Size = UDim2.new(1, -40, 1, -90)
+ContentFrame.Position = UDim2.new(0, 20, 0, 60)
+ContentFrame.BackgroundTransparency = 1
+ContentFrame.Parent = MainFrame
+
+-- Create scrolling frame for buttons
+local ButtonsFrame = Instance.new("ScrollingFrame")
+ButtonsFrame.Name = "ButtonsFrame"
+ButtonsFrame.Size = UDim2.new(1, 0, 1, -40) -- Leave space for timer at bottom
+ButtonsFrame.Position = UDim2.new(0, 0, 0, 0)
+ButtonsFrame.BackgroundTransparency = 1
+ButtonsFrame.ScrollBarThickness = 4 -- Thin scrollbar
+ButtonsFrame.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100) -- Scrollbar color
+ButtonsFrame.CanvasSize = UDim2.new(0, 0, 0, 650) -- Initial canvas size, adjusted for more buttons
+ButtonsFrame.BorderSizePixel = 0 -- No border
+ButtonsFrame.ScrollingDirection = Enum.ScrollingDirection.Y -- Only scroll vertically
+ButtonsFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y -- Automatically adjust canvas size
+ButtonsFrame.Parent = ContentFrame
+
+-- Create timer frame
+local TimerFrame = Instance.new("Frame")
+TimerFrame.Name = "TimerFrame"
+TimerFrame.Size = UDim2.new(1, 0, 0, 30)
+TimerFrame.Position = UDim2.new(0, 0, 1, -30)
+TimerFrame.BackgroundTransparency = 1
+TimerFrame.Parent = ContentFrame
+
+-- Create timer label
+local TimerLabel = Instance.new("TextLabel")
+TimerLabel.Name = "TimerLabel"
+TimerLabel.Size = UDim2.new(1, 0, 1, 0)
+TimerLabel.BackgroundTransparency = 1
+TimerLabel.Text = "Bridge Timer: 10:00"
+TimerLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TimerLabel.Font = Enum.Font.GothamSemibold
+TimerLabel.TextSize = 16
+TimerLabel.Parent = TimerFrame
+
+-- Create footer text
+local FooterLabel = Instance.new("TextLabel")
+FooterLabel.Name = "FooterLabel"
+FooterLabel.Size = UDim2.new(1, 0, 0, 20)
+FooterLabel.Position = UDim2.new(0, 0, 1, -25)
+FooterLabel.BackgroundTransparency = 1
+FooterLabel.Text = "By mark074271"
+FooterLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+FooterLabel.Font = Enum.Font.Gotham
+FooterLabel.TextSize = 14
+FooterLabel.Parent = MainFrame
+
+-- Create pulsing border glow
+local borderGlow = Instance.new("UIStroke")
+borderGlow.Color = Color3.fromRGB(60, 60, 60)
+borderGlow.Thickness = 2.5
+borderGlow.Parent = MainFrame
+
+-- Create pulse animation for border
+RunService.Heartbeat:Connect(function()
+    local pulse = (math.sin(tick() * 2) + 1) / 2 -- Value between 0 and 1
+    borderGlow.Color = Color3.fromRGB(
+        60 + (60 * pulse),
+        60 + (60 * pulse),
+        60 + (60 * pulse)
+    )
+end)
+
+-- Function to create a super duper ultra ultimate smooth button
+local function createButton(name, text, description, position, size, callback, isToggle)
+    local ButtonFrame = Instance.new("TextButton")
+    ButtonFrame.Name = name .. "Button"
+    ButtonFrame.Size = size
+    ButtonFrame.Position = position
+    ButtonFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    ButtonFrame.BorderSizePixel = 0
+    ButtonFrame.Text = ""
+    ButtonFrame.AutoButtonColor = false
+    ButtonFrame.Parent = ButtonsFrame
+    
+    local ButtonCorner = Instance.new("UICorner")
+    ButtonCorner.CornerRadius = UDim.new(0, 10)
+    ButtonCorner.Parent = ButtonFrame
+    
+    local ButtonStroke = Instance.new("UIStroke")
+    ButtonStroke.Color = Color3.fromRGB(60, 60, 60)
+    ButtonStroke.Thickness = 2
+    ButtonStroke.Parent = ButtonFrame
+    
+    local ButtonLabel = Instance.new("TextLabel")
+    ButtonLabel.Name = "ButtonLabel"
+    ButtonLabel.Size = isToggle and UDim2.new(1, -40, 0.6, 0) or UDim2.new(1, 0, 0.6, 0)
+    ButtonLabel.Position = UDim2.new(0, 0, 0, 0)
+    ButtonLabel.BackgroundTransparency = 1
+    ButtonLabel.Text = text
+    ButtonLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ButtonLabel.Font = Enum.Font.GothamBold
+    ButtonLabel.TextSize = 16
+    ButtonLabel.Parent = ButtonFrame
+    
+    -- Description label (new)
+    local DescriptionLabel = Instance.new("TextLabel")
+    DescriptionLabel.Name = "DescriptionLabel"
+    DescriptionLabel.Size = isToggle and UDim2.new(1, -40, 0.4, 0) or UDim2.new(1, 0, 0.4, 0)
+    DescriptionLabel.Position = UDim2.new(0, 0, 0.6, 0)
+    DescriptionLabel.BackgroundTransparency = 1
+    DescriptionLabel.Text = description
+    DescriptionLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+    DescriptionLabel.Font = Enum.Font.Gotham
+    DescriptionLabel.TextSize = 12
+    DescriptionLabel.Parent = ButtonFrame
+    
+    -- Create toggle indicator if it's a toggle button
+    local ToggleIndicator
+    local IsToggled = false
+    
+    if isToggle then
+        ToggleIndicator = Instance.new("Frame")
+        ToggleIndicator.Name = "ToggleIndicator"
+        ToggleIndicator.Size = UDim2.new(0, 24, 0, 24)
+        ToggleIndicator.Position = UDim2.new(1, -30, 0.5, -12)
+        ToggleIndicator.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        ToggleIndicator.BorderSizePixel = 0
+        ToggleIndicator.Parent = ButtonFrame
+        
+        local ToggleCorner = Instance.new("UICorner")
+        ToggleCorner.CornerRadius = UDim.new(0, 6)
+        ToggleCorner.Parent = ToggleIndicator
+    end
+    
+    -- Create hover effect
+    local hoverEffect = Instance.new("Frame")
+    hoverEffect.Name = "HoverEffect"
+    hoverEffect.Size = UDim2.new(1, 0, 1, 0)
+    hoverEffect.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    hoverEffect.BackgroundTransparency = 1
+    hoverEffect.ZIndex = 0
+    hoverEffect.Parent = ButtonFrame
+    
+    local hoverCorner = Instance.new("UICorner")
+    hoverCorner.CornerRadius = UDim.new(0, 10)
+    hoverCorner.Parent = hoverEffect
+    
+    -- Hover effect
+    ButtonFrame.MouseEnter:Connect(function()
+        TweenService:Create(hoverEffect, TweenInfo.new(0.3), {
+            BackgroundTransparency = 0.9
+        }):Play()
+        TweenService:Create(ButtonStroke, TweenInfo.new(0.3), {
+            Color = Color3.fromRGB(100, 100, 100)
+        }):Play()
+    end)
+    
+    ButtonFrame.MouseLeave:Connect(function()
+        TweenService:Create(hoverEffect, TweenInfo.new(0.3), {
+            BackgroundTransparency = 1
+        }):Play()
+        TweenService:Create(ButtonStroke, TweenInfo.new(0.3), {
+            Color = Color3.fromRGB(60, 60, 60)
+        }):Play()
+    end)
+    
+    -- Click effect and callback
+    ButtonFrame.MouseButton1Down:Connect(function()
+        -- Click down effect
+        TweenService:Create(ButtonFrame, TweenInfo.new(0.1), {
+            Size = UDim2.new(size.X.Scale, size.X.Offset - 4, size.Y.Scale, size.Y.Offset - 4),
+            Position = UDim2.new(position.X.Scale, position.X.Offset + 2, position.Y.Scale, position.Y.Offset + 2)
+        }):Play()
+    end)
+    
+    ButtonFrame.MouseButton1Up:Connect(function()
+        -- Click up effect
+        TweenService:Create(ButtonFrame, TweenInfo.new(0.1), {
+            Size = size,
+            Position = position
+        }):Play()
+    end)
+    
+    ButtonFrame.MouseButton1Click:Connect(function()
+        if isToggle then
+            IsToggled = not IsToggled
+            if IsToggled then
+                -- Animate toggle on
+                TweenService:Create(ToggleIndicator, TweenInfo.new(0.3), {
+                    BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+                }):Play()
+            else
+                -- Animate toggle off
+                TweenService:Create(ToggleIndicator, TweenInfo.new(0.3), {
+                    BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+                }):Play()
+            end
+        end
+        
+        callback(IsToggled)
+    end)
+    
+    return ButtonFrame, ButtonLabel, IsToggled
+end
+
+-- Create TP to End Button
+local TPButton = createButton(
+    "TPToEnd",
+    "TP To End",
+    "Tp at the End",
+    UDim2.new(0, 0, 0, 0),
+    UDim2.new(1, -10, 0, 50), -- Adjusted width to fit in scrolling frame
+    function()
+        -- Sequence of teleportations with anti-teleport back measures
+        local Character = Player.Character
+        if Character and Character:FindFirstChild("HumanoidRootPart") then
+            local HRP = Character.HumanoidRootPart
+            local HUM = Character:FindFirstChildOfClass("Humanoid")
+            
+            -- Store original values
+            local originalWalkSpeed = HUM.WalkSpeed
+            
+            -- Disable any movement to prevent teleporting back
+            HUM.WalkSpeed = 0
+            
+            -- First teleport
+            HRP.CFrame = CFrame.new(-424.45, 26.06, -49040.66)
+            HRP.Anchored = true
+            
+            task.wait(0.5)
+            -- Execute anti-teleport measures
+            for _, part in pairs(Character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.Velocity = Vector3.new(0, 0, 0)
+                end
+            end
+            
+            task.wait(1)
+            -- Second teleport
+            HRP.CFrame = CFrame.new(-447.38, 26.08, -48747.68)
+            
+            task.wait(0.5)
+            -- Execute anti-teleport measures
+            for _, part in pairs(Character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.Velocity = Vector3.new(0, 0, 0)
+                end
+            end
+            
+            task.wait(1)
+            -- Third teleport
+            HRP.CFrame = CFrame.new(-312.17, 26.08, -48747.68)
+            
+            task.wait(0.5)
+            -- Execute anti-teleport measures
+            for _, part in pairs(Character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.Velocity = Vector3.new(0, 0, 0)
+                end
+            end
+            
+            task.wait(1)
+            -- Fourth teleport
+            HRP.CFrame = CFrame.new(-424.45, 26.06, -49040.66)
+            
+            -- Wait and release character
+            task.wait(2)
+            HRP.Anchored = false
+            HUM.WalkSpeed = originalWalkSpeed
+        end
+    end
+)
+
+-- Create TP to End Button
+local TPButton = createButton(
+    "TPToEnd",
+    "TP To End (Inside Walls",
+    "Tp at end inside walls",
+    UDim2.new(0, 0, 0, 0),
+    UDim2.new(1, -10, 0, 50), -- Adjusted width to fit in scrolling frame
+    function()
+        -- Sequence of teleportations with anti-teleport back measures
+        local Character = Player.Character
+        if Character and Character:FindFirstChild("HumanoidRootPart") then
+            local HRP = Character.HumanoidRootPart
+            local HUM = Character:FindFirstChildOfClass("Humanoid")
+            
+            -- Store original values
+            local originalWalkSpeed = HUM.WalkSpeed
+            
+            -- Disable any movement to prevent teleporting back
+            HUM.WalkSpeed = 0
+            
+            -- Notify user
+            local notification = Instance.new("ScreenGui")
+            notification.Name = "TPNotification"
+            notification.ResetOnSpawn = false
+            
+            if syn and syn.protect_gui then
+                syn.protect_gui(notification)
+                notification.Parent = CoreGui
+            elseif gethui then
+                notification.Parent = gethui()
+            else
+                notification.Parent = CoreGui
+            end
+            
+            local notifLabel = Instance.new("TextLabel")
+            notifLabel.Size = UDim2.new(0, 300, 0, 50)
+            notifLabel.Position = UDim2.new(0.5, -150, 0.8, -25)
+            notifLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+            notifLabel.BackgroundTransparency = 0.5
+            notifLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+            notifLabel.Font = Enum.Font.GothamBold
+            notifLabel.TextSize = 16
+            notifLabel.Text = "Teleporting..."
+            notifLabel.Parent = notification
+            
+            local notifCorner = Instance.new("UICorner")
+            notifCorner.CornerRadius = UDim.new(0, 10)
+            notifCorner.Parent = notifLabel
+            
+            -- Apply anti-teleport measures
+            local function preventTeleportBack()
+                task.wait(0.1)
+                HRP.Anchored = true
+                
+                -- Reset velocities
+                for _, part in pairs(Character:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.Velocity = Vector3.new(0, 0, 0)
+                        part.RotVelocity = Vector3.new(0, 0, 0)
+                    end
+                end
+                
+                task.wait(0.2)
+            end
+            
+            -- First position
+            notifLabel.Text = "Teleporting (1/5)..."
+            HRP.CFrame = CFrame.new(-339.66, 3.18, -49045.43)
+            preventTeleportBack()
+            
+            -- Second position
+            task.wait(0.5)
+            notifLabel.Text = "Teleporting (2/5)..."
+            HRP.CFrame = CFrame.new(-420.24, 4.48, -49045.39)
+            preventTeleportBack()
+            
+            -- Third position
+            task.wait(0.5)
+            notifLabel.Text = "Teleporting (3/5)..."
+            HRP.CFrame = CFrame.new(-342.15, 4.50, -48747.39)
+            preventTeleportBack()
+            
+            -- Fourth position
+            task.wait(0.5)
+            notifLabel.Text = "Teleporting (4/5)..."
+            HRP.CFrame = CFrame.new(-411.54, 4.50, -48748.30)
+            preventTeleportBack()
+            
+            -- Final position (back to first)
+            task.wait(0.5)
+            notifLabel.Text = "Teleporting (5/5)..."
+            HRP.CFrame = CFrame.new(-339.66, 3.18, -49045.43)
+            preventTeleportBack()
+            
+            -- Re-enable movement
+            task.wait(1)
+            HRP.Anchored = false
+            HUM.WalkSpeed = originalWalkSpeed
+            
+            -- Update completion message
+            notifLabel.Text = "Teleport Complete!"
+            notifLabel.BackgroundColor3 = Color3.fromRGB(0, 120, 0)
+            
+            -- Remove notification after 2 seconds
+            task.delay(2, function()
+                notification:Destroy()
+            end)
+        end
+    end
+)
+
+-- Create Aimbot Mobs Button
+local AimbotButton = createButton(
+    "AimbotMobs",
+    "Aimbot Mobs",
+    "Spectate mobs",
+    UDim2.new(0, 0, 0, 120),
+    UDim2.new(1, -10, 0, 50),
+    function()
+        loadstring(game:HttpGet("https://pastebin.com/raw/q0mvquNu"))()
+    end
+)
+
+-- Noclip variables
+local NoclipActive = false
+local NoclipConnection
+
+-- Function to activate noclip
+local function enableNoclip()
+    if NoclipConnection then return end
+    
+    NoclipActive = true
+    
+    NoclipConnection = RunService.Stepped:Connect(function()
+        if not Player.Character then return end
+        
+        for _, part in pairs(Player.Character:GetDescendants()) do
+            if part:IsA("BasePart") and part.CanCollide then
+                part.CanCollide = false
+            end
+        end
+    end)
+end
+
+-- Function to deactivate noclip
+local function disableNoclip()
+    if NoclipConnection then
+        NoclipConnection:Disconnect()
+        NoclipConnection = nil
+    end
+    
+    NoclipActive = false
+    
+    if Player.Character then
+        for _, part in pairs(Player.Character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = true
+            end
+        end
+    end
+end
+
+-- Create Noclip Toggle Button
+local NoclipButton, _, isNoclipToggled = createButton(
+    "Noclip",
+    "Noclip",
+    "Walk through walls",
+    UDim2.new(0, 0, 0, 180),
+    UDim2.new(1, -10, 0, 50),
+    function(toggled)
+        if toggled then
+            enableNoclip()
+        else
+            disableNoclip()
+        end
+    end,
+    true -- This is a toggle button
+)
+
+-- 3rd Person Camera Variables
+local ThirdPersonActive = false
+local OriginalCameraMaxZoom = nil
+local CameraUpdateConnection = nil
+local OriginalCameraType = nil
+
+-- COMPLETELY FIXED: 3rd person camera with proper toggle between 1st and 3rd person
+-- Function to enable 3rd person camera
+local function enable3rdPerson()
+    ThirdPersonActive = true
+    
+    -- Store original camera type and properties
+    OriginalCameraType = workspace.CurrentCamera.CameraType
+    OriginalCameraMaxZoom = Player.CameraMaxZoomDistance
+    
+    -- Set camera properties for third person
+    workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
+    Player.CameraMode = Enum.CameraMode.Classic
+    Player.CameraMaxZoomDistance = 100 -- Allow zooming out very far
+    Player.CameraMinZoomDistance = 0.5 -- Allow zooming in close
+    
+    -- Force the camera to update
+    if CameraUpdateConnection then
+        CameraUpdateConnection:Disconnect()
+    end
+    
+    CameraUpdateConnection = RunService.RenderStepped:Connect(function()
+        if not ThirdPersonActive then return end
+        
+        if workspace.CurrentCamera.CameraType ~= Enum.CameraType.Custom then
+            workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
+        end
+        
+        if Player.CameraMode ~= Enum.CameraMode.Classic then
+            Player.CameraMode = Enum.CameraMode.Classic
+        end
+    end)
+end
+
+-- Function to disable 3rd person camera (return to first person)
+local function disable3rdPerson()
+    ThirdPersonActive = false
+    
+    -- Disconnect the camera update
+    if CameraUpdateConnection then
+        CameraUpdateConnection:Disconnect()
+        CameraUpdateConnection = nil
+    end
+    
+    -- Restore first person view
+    workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
+    Player.CameraMode = Enum.CameraMode.LockFirstPerson
+    
+    -- Force camera to first person
+    Player.CameraMaxZoomDistance = 0.5
+    Player.CameraMinZoomDistance = 0.5
+    
+    -- Set up a temporary connection to ensure first person sticks
+    local tempConnection
+    tempConnection = RunService.RenderStepped:Connect(function()
+        if Player.CameraMode ~= Enum.CameraMode.LockFirstPerson then
+            Player.CameraMode = Enum.CameraMode.LockFirstPerson
+        end
+        
+        if Player.CameraMaxZoomDistance ~= 0.5 then
+            Player.CameraMaxZoomDistance = 0.5
+        end
+        
+        task.wait(0.1) -- Wait 1 second to ensure settings stick
+        if tempConnection then
+            tempConnection:Disconnect()
+            tempConnection = nil
+        end
+    end)
+end
+
+-- Create 3rd Person Toggle Button
+local ThirdPersonButton, _, isThirdPersonToggled = createButton(
+    "ThirdPerson",
+    "3rd Person",
+    "Unlocks 3rd Person Pov",
+    UDim2.new(0, 0, 0, 240),
+    UDim2.new(1, -10, 0, 50),
+    function(toggled)
+        if toggled then
+            enable3rdPerson()
+        else
+            disable3rdPerson()
+        end
+    end,
+    true -- This is a toggle button
+)
+
+-- ESP Variables and Functions
+local PlayerESPActive = false
+local MobESPActive = false
+local ItemESPActive = false
+local PlayerESPItems = {}
+local MobESPItems = {}
+local ItemESPItems = {}
+local DeadPlayers = {}
+local DeadMobs = {}
+
+-- Function to create ESP for a player
+local function createPlayerESP(player)
+    if PlayerESPItems[player] or not player.Character then return end
+    
+    local Character = player.Character
+    local HumanoidRootPart = Character:FindFirstChild("HumanoidRootPart")
+    local Humanoid = Character:FindFirstChildOfClass("Humanoid")
+    
+    if not HumanoidRootPart or not Humanoid then return end
+    
+    -- Create ESP components
+    local BillboardGui = Instance.new("BillboardGui")
+    BillboardGui.Name = "PlayerESP_" .. player.Name
+    BillboardGui.AlwaysOnTop = true
+    BillboardGui.Size = UDim2.new(0, 200, 0, 50)
+    BillboardGui.StudsOffset = Vector3.new(0, 3, 0)
+    BillboardGui.Adornee = HumanoidRootPart
+    
+    local ESPFrame = Instance.new("Frame")
+    ESPFrame.Name = "ESPFrame"
+    ESPFrame.BackgroundTransparency = 1
+    ESPFrame.Size = UDim2.new(1, 0, 1, 0)
+    ESPFrame.Parent = BillboardGui
+    
+    local NameLabel = Instance.new("TextLabel")
+    NameLabel.Name = "NameLabel"
+    NameLabel.BackgroundTransparency = 1
+    NameLabel.Size = UDim2.new(1, 0, 0.5, 0)
+    NameLabel.Position = UDim2.new(0, 0, 0, 0)
+    NameLabel.Text = player.Name
+    NameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    NameLabel.TextStrokeTransparency = 0.4
+    NameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    NameLabel.Font = Enum.Font.GothamSemibold
+    NameLabel.TextSize = 14
+    NameLabel.Parent = ESPFrame
+    
+    local DistanceLabel = Instance.new("TextLabel")
+    DistanceLabel.Name = "DistanceLabel"
+    DistanceLabel.BackgroundTransparency = 1
+    DistanceLabel.Size = UDim2.new(1, 0, 0.5, 0)
+    DistanceLabel.Position = UDim2.new(0, 0, 0.5, 0)
+    DistanceLabel.Text = "0m"
+    DistanceLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    DistanceLabel.TextStrokeTransparency = 0.4
+    DistanceLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    DistanceLabel.Font = Enum.Font.GothamSemibold
+    DistanceLabel.TextSize = 12
+    DistanceLabel.Parent = ESPFrame
+    
+    -- Create corner
+    local UICorner = Instance.new("UICorner")
+    UICorner.CornerRadius = UDim.new(0, 4)
+    UICorner.Parent = ESPFrame
+    
+    -- Make ESP visible
+    if syn and syn.protect_gui then
+        syn.protect_gui(BillboardGui)
+        BillboardGui.Parent = CoreGui
+    elseif gethui then
+        BillboardGui.Parent = gethui()
+    else
+        BillboardGui.Parent = CoreGui
+    end
+    
+    -- Store ESP items
+    PlayerESPItems[player] = {
+        BillboardGui = BillboardGui,
+        NameLabel = NameLabel,
+        DistanceLabel = DistanceLabel,
+        Connection = nil -- Will store the died connection
+    }
+    
+    -- Create connection to update distance and check for death
+    local function updateESP()
+        if not player or not player.Character or not PlayerESPItems[player] then return end
+        
+        local Character = player.Character
+        local HumanoidRootPart = Character:FindFirstChild("HumanoidRootPart")
+        local Humanoid = Character:FindFirstChildOfClass("Humanoid")
+        
+        if not HumanoidRootPart or not Humanoid then return end
+        
+        -- Update ESP for player
+        if Player and Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") then
+            local distance = (Player.Character.HumanoidRootPart.Position - HumanoidRootPart.Position).Magnitude
+            local roundedDistance = math.floor(distance + 0.5)
+            PlayerESPItems[player].DistanceLabel.Text = roundedDistance .. "m"
+            
+            -- Check if player is dead and update ESP accordingly
+            if Humanoid.Health <= 0 then
+                PlayerESPItems[player].NameLabel.Text = player.Name .. " 💀"
+                PlayerESPItems[player].NameLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+            else
+                PlayerESPItems[player].NameLabel.Text = player.Name
+                PlayerESPItems[player].NameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+            end
+        end
+    end
+    
+    -- Update the ESP immediately
+    updateESP()
+    
+    -- Handle player character death and respawn
+    local function onCharacterDied()
+        if not PlayerESPItems[player] then return end
+        
+        -- Update to show skull
+        PlayerESPItems[player].NameLabel.Text = player.Name .. " 💀"
+        PlayerESPItems[player].NameLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+        
+        -- Listen for respawn
+        if PlayerESPItems[player].Connection then
+            PlayerESPItems[player].Connection:Disconnect()
+        end
+        
+        -- Wait for new character
+        player.CharacterAdded:Connect(function(newCharacter)
+            if not PlayerESPActive or not PlayerESPItems[player] then return end
+            
+            -- Remove old ESP
+            removePlayerESP(player)
+            
+            -- Create new ESP after character is fully loaded
+            task.wait(0.5)
+            createPlayerESP(player)
+        end)
+    end
+    
+    -- Connect to player death event
+    PlayerESPItems[player].Connection = Humanoid.Died:Connect(onCharacterDied)
+    
+    -- Set up ESP update
+    task.spawn(function()
+        while PlayerESPActive and PlayerESPItems[player] do
+            updateESP()
+            task.wait(0.5) -- Update every half second for smoother display
+        end
+    end)
+end
+
+-- Function to remove ESP from a player
+local function removePlayerESP(player)
+    if not PlayerESPItems[player] then return end
+    
+    -- Clean up connections
+    if PlayerESPItems[player].Connection then
+        PlayerESPItems[player].Connection:Disconnect()
+    end
+    
+    -- Remove GUI
+    if PlayerESPItems[player].BillboardGui then
+        PlayerESPItems[player].BillboardGui:Destroy()
+    end
+    
+    -- Remove from tracking
+    PlayerESPItems[player] = nil
+end
+
+-- FIXED: Function to enable ESP for all players with respawn tracking
+local function enablePlayerESP()
+    PlayerESPActive = true
+    
+    -- Create ESP for all existing players
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= Player then -- Don't ESP yourself
+            task.spawn(function()
+                createPlayerESP(player)
+            end)
+        end
+    end
+    
+    -- Connect to PlayerAdded event for new players
+    Players.PlayerAdded:Connect(function(player)
+        if not PlayerESPActive then return end
+        
+        -- Wait for character to load
+        task.wait(1)
+        createPlayerESP(player)
+    end)
+    
+    -- Connect to PlayerRemoving event to clean up
+    Players.PlayerRemoving:Connect(function(player)
+        if not PlayerESPActive then return end
+        removePlayerESP(player)
+    end)
+end
+
+-- Function to disable ESP for all players
+local function disablePlayerESP()
+    PlayerESPActive = false
+    
+    -- Remove ESP from all players
+    for player, _ in pairs(PlayerESPItems) do
+        removePlayerESP(player)
+    end
+end
+
+-- Function to create ESP for a mob
+local function createMobESP(mob)
+    if MobESPItems[mob] or not mob:FindFirstChildOfClass("Humanoid") then return end
+    
+    local HumanoidRootPart = mob:FindFirstChild("HumanoidRootPart") or 
+                             mob:FindFirstChild("Torso") or 
+                             mob:FindFirstChild("UpperTorso") or
+                             mob:FindFirstChild("Head")
+    
+    if not HumanoidRootPart then return end
+    
+    local Humanoid = mob:FindFirstChildOfClass("Humanoid")
+    
+    -- Create ESP components
+    local BillboardGui = Instance.new("BillboardGui")
+    BillboardGui.Name = "MobESP_" .. (mob.Name or "Mob")
+    BillboardGui.AlwaysOnTop = true
+    BillboardGui.Size = UDim2.new(0, 200, 0, 50)
+    BillboardGui.StudsOffset = Vector3.new(0, 3, 0)
+    BillboardGui.Adornee = HumanoidRootPart
+    
+    local ESPFrame = Instance.new("Frame")
+    ESPFrame.Name = "ESPFrame"
+    ESPFrame.BackgroundTransparency = 1
+    ESPFrame.Size = UDim2.new(1, 0, 1, 0)
+    ESPFrame.Parent = BillboardGui
+    
+    local NameLabel = Instance.new("TextLabel")
+    NameLabel.Name = "NameLabel"
+    NameLabel.BackgroundTransparency = 1
+    NameLabel.Size = UDim2.new(1, 0, 0.5, 0)
+    NameLabel.Position = UDim2.new(0, 0, 0, 0)
+    NameLabel.Text = mob.Name or "Mob"
+    NameLabel.TextColor3 = Color3.fromRGB(255, 150, 0)
+    NameLabel.TextStrokeTransparency = 0.4
+    NameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    NameLabel.Font = Enum.Font.GothamSemibold
+    NameLabel.TextSize = 14
+    NameLabel.Parent = ESPFrame
+    
+    local HealthLabel = Instance.new("TextLabel")
+    HealthLabel.Name = "HealthLabel"
+    HealthLabel.BackgroundTransparency = 1
+    HealthLabel.Size = UDim2.new(1, 0, 0.5, 0)
+    HealthLabel.Position = UDim2.new(0, 0, 0.5, 0)
+    HealthLabel.Text = "HP: " .. math.floor(Humanoid.Health) .. "/" .. math.floor(Humanoid.MaxHealth)
+    HealthLabel.TextColor3 = Color3.fromRGB(255, 150, 0)
+    HealthLabel.TextStrokeTransparency = 0.4
+    HealthLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    HealthLabel.Font = Enum.Font.GothamSemibold
+    HealthLabel.TextSize = 12
+    HealthLabel.Parent = ESPFrame
+    
+    -- Create corner
+    local UICorner = Instance.new("UICorner")
+    UICorner.CornerRadius = UDim.new(0, 4)
+    UICorner.Parent = ESPFrame
+    
+    -- Make ESP visible
+    if syn and syn.protect_gui then
+        syn.protect_gui(BillboardGui)
+        BillboardGui.Parent = CoreGui
+    elseif gethui then
+        BillboardGui.Parent = gethui()
+    else
+        BillboardGui.Parent = CoreGui
+    end
+    
+    -- Store ESP items
+    MobESPItems[mob] = {
+        BillboardGui = BillboardGui,
+        NameLabel = NameLabel,
+        HealthLabel = HealthLabel,
+        Connection = nil -- Will store the died connection
+    }
+    
+    -- Create connection to update health and distance
+    local function updateESP()
+        if not mob or not mob:FindFirstChildOfClass("Humanoid") or not MobESPItems[mob] then return end
+        
+        local Humanoid = mob:FindFirstChildOfClass("Humanoid")
+        local HumanoidRootPart = mob:FindFirstChild("HumanoidRootPart") or 
+                                 mob:FindFirstChild("Torso") or 
+                                 mob:FindFirstChild("UpperTorso") or
+                                 mob:FindFirstChild("Head")
+        
+        if not HumanoidRootPart then return end
+        
+        -- Update distance and health
+        if Player and Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") then
+            local distance = (Player.Character.HumanoidRootPart.Position - HumanoidRootPart.Position).Magnitude
+            local roundedDistance = math.floor(distance + 0.5)
+            
+            -- Show health and distance, mark when dead
+            if Humanoid.Health <= 0 then
+                MobESPItems[mob].NameLabel.Text = "Dead " .. (mob.Name or "Mob")
+                MobESPItems[mob].NameLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+                MobESPItems[mob].HealthLabel.Text = roundedDistance .. "m away"
+                MobESPItems[mob].HealthLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+            else
+                MobESPItems[mob].NameLabel.Text = mob.Name or "Mob"
+                MobESPItems[mob].NameLabel.TextColor3 = Color3.fromRGB(255, 150, 0)
+                MobESPItems[mob].HealthLabel.Text = "HP: " .. math.floor(Humanoid.Health) .. "/" .. 
+                                                    math.floor(Humanoid.MaxHealth) .. " | " .. roundedDistance .. "m"
+                MobESPItems[mob].HealthLabel.TextColor3 = Color3.fromRGB(255, 150, 0)
+            end
+        end
+    end
+    
+    -- Update the ESP immediately
+    updateESP()
+    
+    -- Handle mob death
+    local function onMobDied()
+        if not MobESPItems[mob] then return end
+        
+        -- Update to show dead
+        MobESPItems[mob].NameLabel.Text = "Dead " .. (mob.Name or "Mob")
+        MobESPItems[mob].NameLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+        MobESPItems[mob].HealthLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+        
+        -- Continue updating for distance even when dead
+        if Player and Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") and
+           mob:FindFirstChild("HumanoidRootPart") then
+            local distance = (Player.Character.HumanoidRootPart.Position - mob.HumanoidRootPart.Position).Magnitude
+            local roundedDistance = math.floor(distance + 0.5)
+            MobESPItems[mob].HealthLabel.Text = roundedDistance .. "m away"
+        end
+    end
+    
+    -- Connect to death event
+    MobESPItems[mob].Connection = Humanoid.Died:Connect(onMobDied)
+    
+    -- Set up ESP update
+    task.spawn(function()
+        while MobESPActive and MobESPItems[mob] do
+            updateESP()
+            task.wait(0.5) -- Update every half second for faster response
+        end
+    end)
+end
+
+-- Function to remove ESP from a mob
+local function removeMobESP(mob)
+    if not MobESPItems[mob] then return end
+    
+    -- Clean up connections
+    if MobESPItems[mob].Connection then
+        MobESPItems[mob].Connection:Disconnect()
+    end
+    
+    -- Remove GUI
+    if MobESPItems[mob].BillboardGui then
+        MobESPItems[mob].BillboardGui:Destroy()
+    end
+    
+    -- Remove from tracking
+    MobESPItems[mob] = nil
+end
+
+-- FIXED: Function to enable ESP for all mobs with fast updates
+local function enableMobESP()
+    MobESPActive = true
+    
+    -- Create ESP for all existing mobs
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid") then
+            -- Skip player characters
+            local isPlayer = false
+            for _, player in pairs(Players:GetPlayers()) do
+                if player.Character == obj then
+                    isPlayer = true
+                    break
+                end
+            end
+            
+            if not isPlayer and obj ~= Player.Character then
+                task.spawn(function()
+                    createMobESP(obj)
+                end)
+            end
+        end
+    end
+    
+    -- Connect to workspace changes for new mobs
+    workspace.DescendantAdded:Connect(function(obj)
+        if not MobESPActive then return end
+        
+        -- Check if it's a mob (has humanoid but not a player)
+        if obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid") then
+            -- Wait a moment for the mob to fully load
+            task.wait(0.1)
+            
+            -- Skip player characters
+            local isPlayer = false
+            for _, player in pairs(Players:GetPlayers()) do
+                if player.Character == obj then
+                    isPlayer = true
+                    break
+                end
+            end
+            
+            if not isPlayer and obj ~= Player.Character then
+                createMobESP(obj)
+            end
+        end
+    end)
+    
+    -- Connect to removal for cleanup
+    workspace.DescendantRemoving:Connect(function(obj)
+        if not MobESPActive then return end
+        removeMobESP(obj)
+    end)
+    
+    -- Setup periodic scan for mobs that might have been missed
+    task.spawn(function()
+        while MobESPActive do
+            for _, obj in pairs(workspace:GetDescendants()) do
+                if obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid") and not MobESPItems[obj] then
+                    -- Skip player characters
+                    local isPlayer = false
+                    for _, player in pairs(Players:GetPlayers()) do
+                        if player.Character == obj then
+                            isPlayer = true
+                            break
+                        end
+                    end
+                    
+                    if not isPlayer and obj ~= Player.Character then
+                        createMobESP(obj)
+                    end
+                end
+            end
+            task.wait(0.5) -- Scan every 0.5 seconds for new mobs
+        end
+    end)
+end
+
+-- Function to disable ESP for all mobs
+local function disableMobESP()
+    MobESPActive = false
+    
+    -- Remove ESP from all mobs
+    for mob, _ in pairs(MobESPItems) do
+        removeMobESP(mob)
+    end
+end
+
+-- Function to create ESP for an item
+local function createItemESP(item)
+    if ItemESPItems[item] then return end
+    
+    -- Get the item's part to attach ESP to
+    local part
+    if item:IsA("BasePart") then
+        part = item
+    elseif item:IsA("Model") then
+        part = item:FindFirstChildOfClass("BasePart") or item:FindFirstChild("Handle")
+        if not part then
+            for _, child in pairs(item:GetChildren()) do
+                if child:IsA("BasePart") then
+                    part = child
+                    break
+                end
+            end
+        end
+    end
+    
+    if not part then return end
+    
+    -- Create ESP components
+    local BillboardGui = Instance.new("BillboardGui")
+    BillboardGui.Name = "ItemESP_" .. (item.Name or "Item")
+    BillboardGui.AlwaysOnTop = true
+    BillboardGui.Size = UDim2.new(0, 180, 0, 30)
+    BillboardGui.StudsOffset = Vector3.new(0, 2, 0)
+    BillboardGui.Adornee = part
+    
+    local ESPFrame = Instance.new("Frame")
+    ESPFrame.Name = "ESPFrame"
+    ESPFrame.BackgroundTransparency = 1
+    ESPFrame.Size = UDim2.new(1, 0, 1, 0)
+    ESPFrame.Parent = BillboardGui
+    
+    local ItemLabel = Instance.new("TextLabel")
+    ItemLabel.Name = "ItemLabel"
+    ItemLabel.BackgroundTransparency = 1
+    ItemLabel.Size = UDim2.new(1, 0, 1, 0)
+    ItemLabel.Position = UDim2.new(0, 0, 0, 0)
+    ItemLabel.Text = item.Name or "Item"
+    ItemLabel.TextColor3 = Color3.fromRGB(85, 255, 85) -- Bright green for items
+    ItemLabel.TextStrokeTransparency = 0.4
+    ItemLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    ItemLabel.Font = Enum.Font.GothamSemibold
+    ItemLabel.TextSize = 12
+    ItemLabel.Parent = ESPFrame
+    
+    -- Create corner
+    local UICorner = Instance.new("UICorner")
+    UICorner.CornerRadius = UDim.new(0, 4)
+    UICorner.Parent = ESPFrame
+    
+    -- Make ESP visible
+    if syn and syn.protect_gui then
+        syn.protect_gui(BillboardGui)
+        BillboardGui.Parent = CoreGui
+    elseif gethui then
+        BillboardGui.Parent = gethui()
+    else
+        BillboardGui.Parent = CoreGui
+    end
+    
+    -- Store ESP items
+    ItemESPItems[item] = {
+        BillboardGui = BillboardGui,
+        ItemLabel = ItemLabel
+    }
+    
+    -- Optional distance update for items
+    if Player and Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") then
+        task.spawn(function()
+            while ItemESPActive and ItemESPItems[item] and item and item.Parent do
+                if not Player or not Player.Character or not Player.Character:FindFirstChild("HumanoidRootPart") then 
+                    task.wait(1)
+                    goto continue 
+                end
+                
+                -- Update distance
+                if part and part.Parent then
+                    local distance = (Player.Character.HumanoidRootPart.Position - part.Position).Magnitude
+                    local roundedDistance = math.floor(distance + 0.5)
+                    ItemESPItems[item].ItemLabel.Text = item.Name .. " (" .. roundedDistance .. "m)"
+                else
+                    break -- Part no longer exists, stop updating
+                end
+                
+                ::continue::
+                task.wait(1)
+            end
+        end)
+    end
+end
+
+-- Function to remove ESP from an item
+local function removeItemESP(item)
+    if not ItemESPItems[item] then return end
+    
+    -- Remove GUI
+    if ItemESPItems[item].BillboardGui then
+        ItemESPItems[item].BillboardGui:Destroy()
+    end
+    
+    -- Remove from tracking
+    ItemESPItems[item] = nil
+end
+
+-- FIXED: Function to scan for items with proper material detection
+local function scanForItems()
+    if not ItemESPActive then return end
+    
+    -- Define materials keywords - ONLY targeting Materials and Material
+    local materialKeywords = {"Material", "Materials"}
+    
+    -- Scan all workspace objects
+    for _, child in pairs(workspace:GetDescendants()) do
+        -- Skip player characters
+        local skip = false
+        if child:IsA("Model") and child:FindFirstChildOfClass("Humanoid") then
+            for _, player in pairs(Players:GetPlayers()) do
+                if player.Character == child then
+                    skip = true
+                    break
+                end
+            end
+        end
+        
+        if skip or ItemESPItems[child] then
+            goto continue
+        end
+        
+        -- Check name against material keywords
+        local isMaterial = false
+        for _, keyword in ipairs(materialKeywords) do
+            if child.Name:lower():match(keyword:lower()) then
+                isMaterial = true
+                break
+            end
+        end
+        
+        -- Skip very large models (likely environment)
+        if child:IsA("Model") and child:GetExtentsSize().Magnitude > 20 then
+            goto continue
+        end
+        
+        -- ESP ONLY if it matches Materials criteria (no Tools)
+        if isMaterial or
+           (child:IsA("BasePart") and 
+            (child.Parent and (child.Parent.Name:lower():match("material") or 
+                              child.Parent.Name:lower():match("materials")))) then
+            createItemESP(child)
+        end
+        
+        ::continue::
+    end
+end
+
+-- FIXED: Function to enable ESP for all items with proper material detection
+local function enableItemESP()
+    ItemESPActive = true
+    
+    -- Initial scan for items
+    scanForItems()
+    
+    -- Set up recurring scan for new items
+    spawn(function()
+        while ItemESPActive do
+            scanForItems()
+            task.wait(1) -- Scan every 1 seconds
+        end
+    end)
+    
+    -- Connect to specific Material/Materials folders first
+    local materialsFolder = workspace:FindFirstChild("Materials") or workspace:FindFirstChild("Material")
+    
+    if materialsFolder then
+        materialsFolder.DescendantAdded:Connect(function(child)
+            if ItemESPActive and (child:IsA("Model") or child:IsA("BasePart")) then
+                task.wait(0.1) -- Brief wait for the item to fully load
+                createItemESP(child)
+            end
+        end)
+    else
+        -- No materials folder, connect to workspace but only watch for Materials
+        workspace.DescendantAdded:Connect(function(child)
+            if not ItemESPActive then return end
+            
+            -- Skip player characters
+            local skip = false
+            if child:IsA("Model") and child:FindFirstChildOfClass("Humanoid") then
+                for _, player in pairs(Players:GetPlayers()) do
+                    if player.Character == child then
+                        skip = true
+                        break
+                    end
+                end
+            end
+            
+            if skip then return end
+            
+            -- Only check for Material/Materials keywords
+            local isMaterial = false
+            if child.Name:lower():match("material") then
+                isMaterial = true
+            end
+            
+            -- Check parent name for Material too
+            if child.Parent and child.Parent.Name:lower():match("material") then
+                isMaterial = true
+            end
+            
+            if isMaterial then
+                task.wait(0.1) -- Brief wait for the item to fully load
+                createItemESP(child)
+            end
+        end)
+    end
+end
+
+-- Function to disable ESP for all items
+local function disableItemESP()
+    ItemESPActive = false
+    
+    -- Remove ESP from all items
+    for item, _ in pairs(ItemESPItems) do
+        removeItemESP(item)
+    end
+end
+
+-- Create ESP Players Button
+local ESPPlayersButton, _, isESPPlayersToggled = createButton(
+    "ESPPlayers",
+    "ESP Players",
+    "Esp all players and Esp if their DeadðŸ’€",
+    UDim2.new(0, 0, 0, 300),
+    UDim2.new(1, -10, 0, 50),
+    function(toggled)
+        if toggled then
+            enablePlayerESP()
+        else
+            disablePlayerESP()
+        end
+    end,
+    true -- This is a toggle button
+)
+
+-- Create ESP Mobs Button
+local ESPMobsButton, _, isESPMobsToggled = createButton(
+    "ESPMobs",
+    "ESP Mobs",
+    "Esp all mobs (doesn't esp dead mobs)",
+    UDim2.new(0, 0, 0, 360),
+    UDim2.new(1, -10, 0, 50),
+    function(toggled)
+        if toggled then
+            enableMobESP()
+        else
+            disableMobESP()
+        end
+    end,
+    true -- This is a toggle button
+)
+
+-- Create ESP Items Button
+local ESPItemsButton, _, isESPItemsToggled = createButton(
+    "ESPItems",
+    "ESP Items",
+    "Esp all Items",
+    UDim2.new(0, 0, 0, 420),
+    UDim2.new(1, -10, 0, 50),
+    function(toggled)
+        if toggled then
+            enableItemESP()
+        else
+            disableItemESP()
+        end
+    end,
+    true -- This is a toggle button
+)
+
+-- Full Bright Variables
+local FullBrightActive = false
+local OriginalBrightness
+local OriginalClockTime
+local OriginalAmbient
+local OriginalOutdoorAmbient
+local OriginalFogEnd
+local LightingConnection
+
+-- Function to enable Full Bright
+local function enableFullBright()
+    FullBrightActive = true
+    
+    -- Store original lighting settings
+    OriginalBrightness = Lighting.Brightness
+    OriginalClockTime = Lighting.ClockTime
+    OriginalAmbient = Lighting.Ambient
+    OriginalOutdoorAmbient = Lighting.OutdoorAmbient
+    OriginalFogEnd = Lighting.FogEnd
+    
+    -- Apply full bright settings
+    Lighting.Brightness = 2
+    Lighting.ClockTime = 14 -- Midday
+    Lighting.Ambient = Color3.fromRGB(255, 255, 255)
+    Lighting.OutdoorAmbient = Color3.fromRGB(255, 255, 255)
+    Lighting.FogEnd = 100000
+    
+    -- Set up a connection to prevent the game from changing lighting
+    LightingConnection = RunService.Heartbeat:Connect(function()
+        Lighting.Brightness = 2
+        Lighting.ClockTime = 14
+    end)
+end
+
+-- Function to disable Full Bright
+local function disableFullBright()
+    FullBrightActive = false
+    
+    -- Disconnect lighting update
+    if LightingConnection then
+        LightingConnection:Disconnect()
+        LightingConnection = nil
+    end
+    
+    -- Restore original lighting settings
+    Lighting.Brightness = OriginalBrightness
+    Lighting.ClockTime = OriginalClockTime
+    Lighting.Ambient = OriginalAmbient
+    Lighting.OutdoorAmbient = OriginalOutdoorAmbient
+    Lighting.FogEnd = OriginalFogEnd
+end
+
+-- Create Full Bright Button
+local FullBrightButton, _, isFullBrightToggled = createButton(
+    "FullBright",
+    "Full Bright",
+    "Full brightness, makes you see at night",
+    UDim2.new(0, 0, 0, 480),
+    UDim2.new(1, -10, 0, 50),
+    function(toggled)
+        if toggled then
+            enableFullBright()
+        else
+            disableFullBright()
+        end
+    end,
+    true -- This is a toggle button
+)
+
+-- No Fog Variables
+local NoFogActive = false
+local OriginalFogStart
+local OriginalFogEnd
+local OriginalFogColor
+local FogConnection
+
+-- FIXED: Function to enable No Fog (completely removes all fog)
+local function enableNoFog()
+    NoFogActive = true
+    
+    -- Store original fog settings
+    OriginalFogStart = Lighting.FogStart
+    OriginalFogEnd = Lighting.FogEnd
+    OriginalFogColor = Lighting.FogColor
+    
+    -- Remove fog with extreme values
+    Lighting.FogStart = 100000
+    Lighting.FogEnd = 1000000
+    
+    -- Handle any time of day changes
+    if Lighting:FindFirstChild("ClockTime") then
+        Lighting.ClockTime = 12 -- Set to noon for better visibility
+    end
+    
+    -- Remove any existing atmosphere effects
+    for _, effect in pairs(Lighting:GetChildren()) do
+        if effect:IsA("Atmosphere") then
+            effect.Density = 0
+            effect.Offset = 0
+            effect.Color = Color3.fromRGB(255, 255, 255)
+            effect.Decay = Color3.fromRGB(255, 255, 255)
+            effect.Glare = 0
+            effect.Haze = 0
+        end
+    end
+    
+    -- Set up a connection to prevent the game from changing fog
+    -- and to handle any fog created by the game dynamically
+    FogConnection = RunService.Heartbeat:Connect(function()
+        -- Keep removing all fog by setting extreme values
+        Lighting.FogStart = 100000
+        Lighting.FogEnd = 1000000
+        
+        -- Also check and remove any atmospheric effects that might be added
+        for _, child in pairs(Lighting:GetChildren()) do
+            if child:IsA("Atmosphere") then
+                child.Density = 0
+                child.Offset = 0
+                child.Color = Color3.fromRGB(255, 255, 255)
+                child.Decay = Color3.fromRGB(255, 255, 255)
+                child.Glare = 0
+                child.Haze = 0
+            elseif child:IsA("BloomEffect") then
+                child.Enabled = false
+            elseif child:IsA("BlurEffect") then
+                child.Enabled = false
+            elseif child:IsA("ColorCorrectionEffect") then
+                child.Enabled = false
+            elseif child:IsA("DepthOfFieldEffect") then
+                child.Enabled = false
+            elseif child:IsA("SunRaysEffect") then
+                child.Enabled = false
+            end
+        end
+    end)
+end
+
+-- Function to disable No Fog
+local function disableNoFog()
+    NoFogActive = false
+    
+    -- Disconnect fog update
+    if FogConnection then
+        FogConnection:Disconnect()
+        FogConnection = nil
+    end
+    
+    -- Restore original fog settings
+    Lighting.FogStart = OriginalFogStart
+    Lighting.FogEnd = OriginalFogEnd
+    Lighting.FogColor = OriginalFogColor
+end
+
+-- Create No Fog Button
+local NoFogButton, _, isNoFogToggled = createButton(
+    "NoFog",
+    "No Fog",
+    "Removes all fog in the game",
+    UDim2.new(0, 0, 0, 540),
+    UDim2.new(1, -10, 0, 50),
+    function(toggled)
+        if toggled then
+            enableNoFog()
+        else
+            disableNoFog()
+        end
+    end,
+    true -- This is a toggle button
+)
+
+-- Silent Aim Variables
+local SilentAimActive = false
+local SilentAimConnection
+local OriginalNamecall
+
+-- Function to find closest mob within range
+local function getClosestMob(range)
+    local closestMob = nil
+    local closestDistance = range or 100 -- Default to 100 studs as requested
+    
+    -- Ensure player character exists
+    if not Player.Character or not Player.Character:FindFirstChild("HumanoidRootPart") then
+        return nil
+    end
+    
+    local playerHRP = Player.Character.HumanoidRootPart
+    
+    -- Search workspace for mobs
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid") then
+            -- Skip player characters
+            local isPlayer = false
+            for _, plr in pairs(Players:GetPlayers()) do
+                if plr.Character == obj then
+                    isPlayer = true
+                    break
+                end
+            end
+            
+            if not isPlayer and obj ~= Player.Character then
+                local humanoid = obj:FindFirstChildOfClass("Humanoid")
+                if humanoid and humanoid.Health > 0 then
+                    local mobHRP = obj:FindFirstChild("HumanoidRootPart") or 
+                                  obj:FindFirstChild("Torso") or 
+                                  obj:FindFirstChild("UpperTorso") or
+                                  obj:FindFirstChild("Head")
+                    
+                    if mobHRP then
+                        local distance = (playerHRP.Position - mobHRP.Position).Magnitude
+                        if distance < closestDistance then
+                            closestMob = mobHRP
+                            closestDistance = distance
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
+    return closestMob
+end
+
+-- FIXED: Silent Aim Variables with 100 stud range
+local SilentAimActive = false
+local SilentAimConnection
+local OriginalNamecall
+
+-- FIXED: Function to enable Silent Aim with 100 stud range limit
+local function enableSilentAim()
+    SilentAimActive = true
+    
+    -- Visual indicator for debug (optional)
+    local aimIndicator = Instance.new("ScreenGui")
+    aimIndicator.Name = "SilentAimIndicator"
+    aimIndicator.ResetOnSpawn = false
+    
+    if syn and syn.protect_gui then
+        syn.protect_gui(aimIndicator)
+        aimIndicator.Parent = CoreGui
+    elseif gethui then
+        aimIndicator.Parent = gethui()
+    else
+        aimIndicator.Parent = CoreGui
+    end
+    
+    local indicatorLabel = Instance.new("TextLabel")
+    indicatorLabel.Size = UDim2.new(0, 150, 0, 25)
+    indicatorLabel.Position = UDim2.new(0.5, -75, 0.1, 0)
+    indicatorLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    indicatorLabel.BackgroundTransparency = 0.7
+    indicatorLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    indicatorLabel.Font = Enum.Font.GothamSemibold
+    indicatorLabel.TextSize = 12
+    indicatorLabel.Text = "Silent Aim: No Target"
+    indicatorLabel.Visible = false -- Set to true for debugging
+    indicatorLabel.Parent = aimIndicator
+    
+    local indicatorCorner = Instance.new("UICorner")
+    indicatorCorner.CornerRadius = UDim.new(0, 6)
+    indicatorCorner.Parent = indicatorLabel
+    
+    -- Use metatable hook for silent aim
+    if not OriginalNamecall then
+        OriginalNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+            local method = getnamecallmethod()
+            local args = {...}
+            
+            -- Check if silent aim is active and it's a firing method
+            if SilentAimActive and (method == "FireServer" or method == "InvokeServer") and 
+               (self.Name:match("Fire") or self.Name:match("Shoot") or self.Name:match("Attack") or 
+                self.Name:match("Hit") or self.Name:match("Damage")) then
+                
+                -- Find the closest mob within 100 studs
+                local closestMob = getClosestMob(100)
+                
+                -- Update indicator if enabled
+                if indicatorLabel.Visible then
+                    if closestMob then
+                        indicatorLabel.Text = "Silent Aim: Targeting"
+                        indicatorLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+                    else
+                        indicatorLabel.Text = "Silent Aim: No Target"
+                        indicatorLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    end
+                end
+                
+                -- If found a mob in range, modify args to target it
+                if closestMob then
+                    -- Look for position arguments to modify
+                    for i, v in pairs(args) do
+                        if typeof(v) == "Vector3" then
+                            -- Replace target position with mob position
+                            args[i] = closestMob.Position
+                        elseif typeof(v) == "CFrame" then
+                            -- Replace target CFrame with one pointing at mob
+                            args[i] = CFrame.new(v.Position, closestMob.Position)
+                        end
+                    end
+                    
+                    -- Handle specific argument patterns for common weapons
+                    local hasModifiedArgument = false
+                    for i, v in pairs(args) do
+                        if typeof(v) == "table" and v.target then
+                            -- Some games use this format
+                            v.target = closestMob
+                            hasModifiedArgument = true
+                        elseif typeof(v) == "table" and v.position then
+                            -- Some games use this format
+                            v.position = closestMob.Position
+                            hasModifiedArgument = true
+                        end
+                    end
+                    
+                    -- If it's a raycast-based weapon, try to handle that too
+                    if not hasModifiedArgument and method == "FireServer" and 
+                       (self.Name:match("Ray") or self.Name:match("Bullet")) then
+                        -- Many games use the first argument as the raycast origin
+                        -- and the second as the direction or endpoint
+                        if typeof(args[1]) == "Vector3" and typeof(args[2]) == "Vector3" then
+                            args[2] = closestMob.Position
+                        end
+                    end
+                end
+            end
+            
+            return OriginalNamecall(self, unpack(args))
+        end)
+    end
+    
+    -- Create a dot in the center of the screen for aiming reference
+    local aimDot = Drawing.new("Circle")
+    aimDot.Visible = false -- Set to true for debugging
+    aimDot.Transparency = 1
+    aimDot.Color = Color3.fromRGB(255, 0, 0)
+    aimDot.Thickness = 1
+    aimDot.NumSides = 12
+    aimDot.Radius = 3
+    aimDot.Filled = true
+    aimDot.Position = Vector2.new(workspace.CurrentCamera.ViewportSize.X / 2, workspace.CurrentCamera.ViewportSize.Y / 2)
+    
+    -- Update dot position on camera change
+    SilentAimConnection = workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
+        aimDot.Position = Vector2.new(workspace.CurrentCamera.ViewportSize.X / 2, workspace.CurrentCamera.ViewportSize.Y / 2)
+    end)
+    
+    -- Store for cleanup
+    SilentAimConnection = {
+        CameraConnection = SilentAimConnection,
+        AimDot = aimDot,
+        Indicator = aimIndicator
+    }
+end
+
+-- Function to disable Silent Aim
+local function disableSilentAim()
+    SilentAimActive = false
+    
+    -- Clean up the aiming dot and indicator
+    if SilentAimConnection then
+        if SilentAimConnection.CameraConnection then
+            SilentAimConnection.CameraConnection:Disconnect()
+        end
+        
+        if SilentAimConnection.AimDot then
+            SilentAimConnection.AimDot:Remove()
+        end
+        
+        if SilentAimConnection.Indicator then
+            SilentAimConnection.Indicator:Destroy()
+        end
+        
+        SilentAimConnection = nil
+    end
+    
+    -- We don't restore the original namecall here to avoid errors
+    -- Just disabling the flag will make the hook passive
+end
+
+-- Create Silent Aim Button (FIXED to 100 studs)
+local SilentAimButton, _, isSilentAimToggled = createButton(
+    "SilentAim",
+    "Aims bullets into mobs",
+    "Auto aims bullets to mobs within 100 studs",
+    UDim2.new(0, 0, 0, 600),
+    UDim2.new(1, -10, 0, 50),
+    function(toggled)
+        if toggled then
+            enableSilentAim()
+        else
+            disableSilentAim()
+        end
+    end,
+    true -- This is a toggle button
+)
+
+-- Timer functionality
+local timerRunning = true
+local timeLeft = 600 -- 10 minutes in seconds
+
+local function updateTimerDisplay()
+    local minutes = math.floor(timeLeft / 60)
+    local seconds = timeLeft % 60
+    TimerLabel.Text = string.format("Bridge Timer: %02d:%02d", minutes, seconds)
+end
+
+-- Start timer countdown
+task.spawn(function()
+    while timerRunning and timeLeft > 0 do
+        updateTimerDisplay()
+        task.wait(1)
+        timeLeft = timeLeft - 1
+    end
+    
+    -- Timer reached zero
+    updateTimerDisplay()
+end)
+
+-- Minimize/Close button functionality
+local isMinimized = false
+
+MinimizeButton.MouseButton1Click:Connect(function()
+    if isMinimized then
+        -- Restore the GUI
+        TweenService:Create(MainFrame, TweenInfo.new(0.3), {
+            Size = UDim2.new(0, 400, 0, 300)
+        }):Play()
+        
+        ButtonsFrame.Visible = true
+        ContentFrame.Visible = true
+        FooterLabel.Visible = true
+        
+        MinimizeButton.Text = "-"
+        isMinimized = false
+    else
+        -- Minimize the GUI
+        TweenService:Create(MainFrame, TweenInfo.new(0.3), {
+            Size = UDim2.new(0, 400, 0, 40)
+        }):Play()
+        
+        ButtonsFrame.Visible = false
+        ContentFrame.Visible = false
+        FooterLabel.Visible = false
+        
+        MinimizeButton.Text = "+"
+        isMinimized = true
+    end
+end)
+
+CloseButton.MouseButton1Click:Connect(function()
+    -- Fade out and destroy the GUI
+    TweenService:Create(MainFrame, TweenInfo.new(0.5), {
+        BackgroundTransparency = 1
+    }):Play()
+    
+    TweenService:Create(TitleBar, TweenInfo.new(0.5), {
+        BackgroundTransparency = 1
+    }):Play()
+    
+    TweenService:Create(TitleText, TweenInfo.new(0.5), {
+        TextTransparency = 1
+    }):Play()
+    
+    TweenService:Create(MinimizeButton, TweenInfo.new(0.5), {
+        TextTransparency = 1
+    }):Play()
+    
+    TweenService:Create(CloseButton, TweenInfo.new(0.5), {
+        TextTransparency = 1
+    }):Play()
+    
+    -- Disable all features if they're active
+    if NoclipActive then
+        disableNoclip()
+    end
+    
+    if ThirdPersonActive then
+        disable3rdPerson()
+    end
+    
+    if PlayerESPActive then
+        disablePlayerESP()
+    end
+    
+    if MobESPActive then
+        disableMobESP()
+    end
+    
+    if ItemESPActive then
+        disableItemESP()
+    end
+    
+    if FullBrightActive then
+        disableFullBright()
+    end
+    
+    if TouchFlingActive then
+        disableTouchFling()
+    end
+    
+    if NoFogActive then
+        disableNoFog()
+    end
+    
+    if SilentAimActive then
+        disableSilentAim()
+    end
+    
+    -- Cleanup and remove GUI
+    task.wait(0.5)
+    ZyviorHub:Destroy()
+    timerRunning = false
+end)
+
+-- Animate the GUI entrance
+MainFrame.Position = UDim2.new(0.5, -200, -0.5, 0)
+TweenService:Create(MainFrame, TweenInfo.new(0.7, Enum.EasingStyle.Bounce), {
+    Position = UDim2.new(0.5, -200, 0.5, -150)
+}):Play()
