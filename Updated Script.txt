@@ -1,0 +1,2170 @@
+-- Services
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local CoreGui = game:GetService("CoreGui")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
+
+-- Variables
+local Player = Players.LocalPlayer
+local Mouse = Player:GetMouse()
+task.wait(1) -- short wait to ensure PlaceId is loaded properly
+
+local validDeadRailsIds = {
+    133377094302868,
+    70876832253163,
+    116495829188952
+}
+
+local currentPlaceId = tonumber(game.PlaceId)
+
+if not table.find(validDeadRailsIds, currentPlaceId) then
+    -- Create purple blur screen if not in Dead Rails
+    local NotInGameGui = Instance.new("ScreenGui")
+    NotInGameGui.Name = "NotInGameGui"
+    NotInGameGui.ResetOnSpawn = false
+    NotInGameGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    
+    -- Check if we should use PlayerGui or CoreGui
+    if syn and syn.protect_gui then
+        syn.protect_gui(NotInGameGui)
+        NotInGameGui.Parent = CoreGui
+    elseif gethui then
+        NotInGameGui.Parent = gethui()
+    else
+        NotInGameGui.Parent = CoreGui
+    end
+    
+    -- Create blur frame
+    local BlurFrame = Instance.new("Frame")
+    BlurFrame.Name = "BlurFrame"
+    BlurFrame.Size = UDim2.new(1, 0, 1, 0)
+    BlurFrame.Position = UDim2.new(0, 0, 0, 0)
+    BlurFrame.BackgroundColor3 = Color3.fromRGB(76, 0, 153)
+    BlurFrame.BackgroundTransparency = 0.7
+    BlurFrame.BorderSizePixel = 0
+    BlurFrame.Parent = NotInGameGui
+    
+    -- Create warning text
+    local WarningText = Instance.new("TextLabel")
+    WarningText.Name = "WarningText"
+    WarningText.Size = UDim2.new(0, 400, 0, 100)
+    WarningText.Position = UDim2.new(0.5, -200, 0.5, -50)
+    WarningText.BackgroundTransparency = 1
+    WarningText.Text = "Make Sure You're On Dead Rails!"
+    WarningText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    WarningText.Font = Enum.Font.GothamBold
+    WarningText.TextSize = 28
+    WarningText.Parent = BlurFrame
+    
+    -- Animate the warning text
+    WarningText.TextTransparency = 1
+    TweenService:Create(WarningText, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
+        TextTransparency = 0
+    }):Play()
+    
+    -- Remove the GUI after 10 seconds
+    task.delay(10, function()
+        TweenService:Create(WarningText, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.In), {
+            TextTransparency = 1
+        }):Play()
+        
+        TweenService:Create(BlurFrame, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.In), {
+            BackgroundTransparency = 1
+        }):Play()
+        
+        task.wait(1)
+        NotInGameGui:Destroy()
+    end)
+    
+    return
+end
+
+-- GUI Creation
+local ZyviorHub = Instance.new("ScreenGui")
+ZyviorHub.Name = "ZyviorHub_DeadRails"
+ZyviorHub.ResetOnSpawn = false
+ZyviorHub.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+-- Check if we should use PlayerGui or CoreGui
+if syn and syn.protect_gui then
+    syn.protect_gui(ZyviorHub)
+    ZyviorHub.Parent = CoreGui
+elseif gethui then
+    ZyviorHub.Parent = gethui()
+else
+    ZyviorHub.Parent = CoreGui
+end
+
+-- Create main frame with gradient
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 400, 0, 300)
+MainFrame.Position = UDim2.new(0.5, -200, 0.5, -150)
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ZyviorHub
+
+-- Super duper ultra ultimate smooth rounded corners
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 15)
+UICorner.Parent = MainFrame
+
+-- Create glow effect
+local GlowEffect = Instance.new("ImageLabel")
+GlowEffect.Name = "GlowEffect"
+GlowEffect.BackgroundTransparency = 1
+GlowEffect.Position = UDim2.new(0.5, -250, 0.5, -250)
+GlowEffect.Size = UDim2.new(0, 500, 0, 500)
+GlowEffect.Image = "rbxassetid://5028857084" -- Radial gradient
+GlowEffect.ImageColor3 = Color3.fromRGB(255, 255, 255)
+GlowEffect.ImageTransparency = 0.8
+GlowEffect.ZIndex = 0
+GlowEffect.Parent = MainFrame
+
+-- Create pulse animation for glow
+local function createPulseAnimation()
+    local tweenInfo = TweenInfo.new(
+        2, -- Time
+        Enum.EasingStyle.Sine, -- Easing style
+        Enum.EasingDirection.InOut, -- Easing direction
+        -1, -- Repeat count (-1 means loop forever)
+        true, -- Reverses
+        0 -- Delay time
+    )
+    
+    local tween = TweenService:Create(GlowEffect, tweenInfo, {
+        ImageTransparency = 0.7,
+        Size = UDim2.new(0, 520, 0, 520)
+    })
+    
+    tween:Play()
+end
+
+createPulseAnimation()
+
+-- Create title bar
+local TitleBar = Instance.new("Frame")
+TitleBar.Name = "TitleBar"
+TitleBar.Size = UDim2.new(1, 0, 0, 40)
+TitleBar.Position = UDim2.new(0, 0, 0, 0)
+TitleBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+TitleBar.BorderSizePixel = 0
+TitleBar.ZIndex = 2
+TitleBar.Parent = MainFrame
+
+-- Round the title bar corners
+local TitleCorner = Instance.new("UICorner")
+TitleCorner.CornerRadius = UDim.new(0, 15)
+TitleCorner.Parent = TitleBar
+
+-- Fix for title bar corners (to make only top corners round)
+local TitleBarFix = Instance.new("Frame")
+TitleBarFix.Name = "TitleBarFix"
+TitleBarFix.Size = UDim2.new(1, 0, 0, 20)
+TitleBarFix.Position = UDim2.new(0, 0, 0.5, 0)
+TitleBarFix.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+TitleBarFix.BorderSizePixel = 0
+TitleBarFix.ZIndex = 2
+TitleBarFix.Parent = TitleBar
+
+-- Create title text
+local TitleText = Instance.new("TextLabel")
+TitleText.Name = "TitleText"
+TitleText.Size = UDim2.new(1, -100, 1, 0)
+TitleText.Position = UDim2.new(0, 15, 0, 0)
+TitleText.BackgroundTransparency = 1
+TitleText.Text = "ZyviorHub | Dead Rails"
+TitleText.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleText.Font = Enum.Font.GothamBold
+TitleText.TextSize = 18
+TitleText.TextXAlignment = Enum.TextXAlignment.Left
+TitleText.ZIndex = 3
+TitleText.Parent = TitleBar
+
+-- Create minimize button
+local MinimizeButton = Instance.new("TextButton")
+MinimizeButton.Name = "MinimizeButton"
+MinimizeButton.Size = UDim2.new(0, 30, 0, 30)
+MinimizeButton.Position = UDim2.new(1, -70, 0, 5)
+MinimizeButton.BackgroundTransparency = 1
+MinimizeButton.Text = "-"
+MinimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinimizeButton.Font = Enum.Font.GothamBold
+MinimizeButton.TextSize = 24
+MinimizeButton.ZIndex = 3
+MinimizeButton.Parent = TitleBar
+
+-- Create close button
+local CloseButton = Instance.new("TextButton")
+CloseButton.Name = "CloseButton"
+CloseButton.Size = UDim2.new(0, 30, 0, 30)
+CloseButton.Position = UDim2.new(1, -35, 0, 5)
+CloseButton.BackgroundTransparency = 1
+CloseButton.Text = "x"
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.Font = Enum.Font.GothamBold
+CloseButton.TextSize = 24
+CloseButton.ZIndex = 3
+CloseButton.Parent = TitleBar
+
+-- Create content frame
+local ContentFrame = Instance.new("Frame")
+ContentFrame.Name = "ContentFrame"
+ContentFrame.Size = UDim2.new(1, -40, 1, -90)
+ContentFrame.Position = UDim2.new(0, 20, 0, 60)
+ContentFrame.BackgroundTransparency = 1
+ContentFrame.Parent = MainFrame
+
+-- Create scrolling frame for buttons
+local ButtonsFrame = Instance.new("ScrollingFrame")
+ButtonsFrame.Name = "ButtonsFrame"
+ButtonsFrame.Size = UDim2.new(1, 0, 1, -40) -- Leave space for timer at bottom
+ButtonsFrame.Position = UDim2.new(0, 0, 0, 0)
+ButtonsFrame.BackgroundTransparency = 1
+ButtonsFrame.ScrollBarThickness = 4 -- Thin scrollbar
+ButtonsFrame.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100) -- Scrollbar color
+ButtonsFrame.CanvasSize = UDim2.new(0, 0, 0, 720) -- Initial canvas size, adjusted for more buttons
+ButtonsFrame.BorderSizePixel = 0 -- No border
+ButtonsFrame.ScrollingDirection = Enum.ScrollingDirection.Y -- Only scroll vertically
+ButtonsFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y -- Automatically adjust canvas size
+ButtonsFrame.Parent = ContentFrame
+
+-- Create timer frame
+local TimerFrame = Instance.new("Frame")
+TimerFrame.Name = "TimerFrame"
+TimerFrame.Size = UDim2.new(1, 0, 0, 30)
+TimerFrame.Position = UDim2.new(0, 0, 1, -30)
+TimerFrame.BackgroundTransparency = 1
+TimerFrame.Parent = ContentFrame
+
+-- Create timer label
+local TimerLabel = Instance.new("TextLabel")
+TimerLabel.Name = "TimerLabel"
+TimerLabel.Size = UDim2.new(1, 0, 1, 0)
+TimerLabel.BackgroundTransparency = 1
+TimerLabel.Text = "Bridge Timer: 10:00"
+TimerLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TimerLabel.Font = Enum.Font.GothamSemibold
+TimerLabel.TextSize = 16
+TimerLabel.Parent = TimerFrame
+
+-- Create footer text
+local FooterLabel = Instance.new("TextLabel")
+FooterLabel.Name = "FooterLabel"
+FooterLabel.Size = UDim2.new(1, 0, 0, 20)
+FooterLabel.Position = UDim2.new(0, 0, 1, -25)
+FooterLabel.BackgroundTransparency = 1
+FooterLabel.Text = "By mark074271"
+FooterLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+FooterLabel.Font = Enum.Font.Gotham
+FooterLabel.TextSize = 14
+FooterLabel.Parent = MainFrame
+
+-- Create pulsing border glow
+local borderGlow = Instance.new("UIStroke")
+borderGlow.Color = Color3.fromRGB(60, 60, 60)
+borderGlow.Thickness = 2.5
+borderGlow.Parent = MainFrame
+
+-- Create pulse animation for border
+RunService.Heartbeat:Connect(function()
+    local pulse = (math.sin(tick() * 2) + 1) / 2 -- Value between 0 and 1
+    borderGlow.Color = Color3.fromRGB(
+        60 + (60 * pulse),
+        60 + (60 * pulse),
+        60 + (60 * pulse)
+    )
+end)
+
+-- Function to create a super duper ultra ultimate smooth button
+local function createButton(name, text, description, position, size, callback, isToggle)
+    local ButtonFrame = Instance.new("TextButton")
+    ButtonFrame.Name = name .. "Button"
+    ButtonFrame.Size = size
+    ButtonFrame.Position = position
+    ButtonFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    ButtonFrame.BorderSizePixel = 0
+    ButtonFrame.Text = ""
+    ButtonFrame.AutoButtonColor = false
+    ButtonFrame.Parent = ButtonsFrame
+    
+    local ButtonCorner = Instance.new("UICorner")
+    ButtonCorner.CornerRadius = UDim.new(0, 10)
+    ButtonCorner.Parent = ButtonFrame
+    
+    local ButtonStroke = Instance.new("UIStroke")
+    ButtonStroke.Color = Color3.fromRGB(60, 60, 60)
+    ButtonStroke.Thickness = 2
+    ButtonStroke.Parent = ButtonFrame
+    
+    local ButtonLabel = Instance.new("TextLabel")
+    ButtonLabel.Name = "ButtonLabel"
+    ButtonLabel.Size = isToggle and UDim2.new(1, -40, 0.6, 0) or UDim2.new(1, 0, 0.6, 0)
+    ButtonLabel.Position = UDim2.new(0, 0, 0, 0)
+    ButtonLabel.BackgroundTransparency = 1
+    ButtonLabel.Text = text
+    ButtonLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ButtonLabel.Font = Enum.Font.GothamBold
+    ButtonLabel.TextSize = 16
+    ButtonLabel.Parent = ButtonFrame
+    
+    -- Description label (new)
+    local DescriptionLabel = Instance.new("TextLabel")
+    DescriptionLabel.Name = "DescriptionLabel"
+    DescriptionLabel.Size = isToggle and UDim2.new(1, -40, 0.4, 0) or UDim2.new(1, 0, 0.4, 0)
+    DescriptionLabel.Position = UDim2.new(0, 0, 0.6, 0)
+    DescriptionLabel.BackgroundTransparency = 1
+    DescriptionLabel.Text = description
+    DescriptionLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+    DescriptionLabel.Font = Enum.Font.Gotham
+    DescriptionLabel.TextSize = 12
+    DescriptionLabel.Parent = ButtonFrame
+    
+    -- Create toggle indicator if it's a toggle button
+    local ToggleIndicator
+    local IsToggled = false
+    
+    if isToggle then
+        ToggleIndicator = Instance.new("Frame")
+        ToggleIndicator.Name = "ToggleIndicator"
+        ToggleIndicator.Size = UDim2.new(0, 24, 0, 24)
+        ToggleIndicator.Position = UDim2.new(1, -30, 0.5, -12)
+        ToggleIndicator.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        ToggleIndicator.BorderSizePixel = 0
+        ToggleIndicator.Parent = ButtonFrame
+        
+        local ToggleCorner = Instance.new("UICorner")
+        ToggleCorner.CornerRadius = UDim.new(0, 6)
+        ToggleCorner.Parent = ToggleIndicator
+    end
+    
+    -- Create hover effect
+    local hoverEffect = Instance.new("Frame")
+    hoverEffect.Name = "HoverEffect"
+    hoverEffect.Size = UDim2.new(1, 0, 1, 0)
+    hoverEffect.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    hoverEffect.BackgroundTransparency = 1
+    hoverEffect.ZIndex = 0
+    hoverEffect.Parent = ButtonFrame
+    
+    local hoverCorner = Instance.new("UICorner")
+    hoverCorner.CornerRadius = UDim.new(0, 10)
+    hoverCorner.Parent = hoverEffect
+    
+    -- Hover effect
+    ButtonFrame.MouseEnter:Connect(function()
+        TweenService:Create(hoverEffect, TweenInfo.new(0.3), {
+            BackgroundTransparency = 0.9
+        }):Play()
+        TweenService:Create(ButtonStroke, TweenInfo.new(0.3), {
+            Color = Color3.fromRGB(100, 100, 100)
+        }):Play()
+    end)
+    
+    ButtonFrame.MouseLeave:Connect(function()
+        TweenService:Create(hoverEffect, TweenInfo.new(0.3), {
+            BackgroundTransparency = 1
+        }):Play()
+        TweenService:Create(ButtonStroke, TweenInfo.new(0.3), {
+            Color = Color3.fromRGB(60, 60, 60)
+        }):Play()
+    end)
+    
+    -- Click effect and callback
+    ButtonFrame.MouseButton1Down:Connect(function()
+        -- Click down effect
+        TweenService:Create(ButtonFrame, TweenInfo.new(0.1), {
+            Size = UDim2.new(size.X.Scale, size.X.Offset - 4, size.Y.Scale, size.Y.Offset - 4),
+            Position = UDim2.new(position.X.Scale, position.X.Offset + 2, position.Y.Scale, position.Y.Offset + 2)
+        }):Play()
+    end)
+    
+    ButtonFrame.MouseButton1Up:Connect(function()
+        -- Click up effect
+        TweenService:Create(ButtonFrame, TweenInfo.new(0.1), {
+            Size = size,
+            Position = position
+        }):Play()
+    end)
+    
+    ButtonFrame.MouseButton1Click:Connect(function()
+        if isToggle then
+            IsToggled = not IsToggled
+            if IsToggled then
+                -- Animate toggle on
+                TweenService:Create(ToggleIndicator, TweenInfo.new(0.3), {
+                    BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+                }):Play()
+            else
+                -- Animate toggle off
+                TweenService:Create(ToggleIndicator, TweenInfo.new(0.3), {
+                    BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+                }):Play()
+            end
+        end
+        
+        callback(IsToggled)
+    end)
+    
+    return ButtonFrame, ButtonLabel, IsToggled
+end
+
+-- Create TP to End Button
+local TPButton = createButton(
+    "TPToEnd",
+    "Tp to end",
+    "Teleports you to the final destination",
+    UDim2.new(0, 0, 0, 0),
+    UDim2.new(1, -10, 0, 50), -- Adjusted width to fit in scrolling frame
+    function()
+        -- Sequence of teleportations with anti-teleport back measures
+        local Character = Player.Character
+        if Character and Character:FindFirstChild("HumanoidRootPart") then
+            local HRP = Character.HumanoidRootPart
+            local HUM = Character:FindFirstChildOfClass("Humanoid")
+            
+            -- Store original values
+            local originalWalkSpeed = HUM.WalkSpeed
+            
+            -- Disable any movement to prevent teleporting back
+            HUM.WalkSpeed = 0
+            
+            -- First teleport
+            HRP.CFrame = CFrame.new(-424.45, 26.06, -49040.66)
+            HRP.Anchored = true
+            
+            task.wait(0.5)
+            -- Execute anti-teleport measures
+            for _, part in pairs(Character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.Velocity = Vector3.new(0, 0, 0)
+                end
+            end
+            
+            task.wait(1)
+            -- Second teleport
+            HRP.CFrame = CFrame.new(-447.38, 26.08, -48747.68)
+            
+            task.wait(0.5)
+            -- Execute anti-teleport measures
+            for _, part in pairs(Character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.Velocity = Vector3.new(0, 0, 0)
+                end
+            end
+            
+            task.wait(1)
+            -- Third teleport
+            HRP.CFrame = CFrame.new(-312.17, 26.08, -48747.68)
+            
+            task.wait(0.5)
+            -- Execute anti-teleport measures
+            for _, part in pairs(Character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.Velocity = Vector3.new(0, 0, 0)
+                end
+            end
+            
+            task.wait(1)
+            -- Fourth teleport
+            HRP.CFrame = CFrame.new(-424.45, 26.06, -49040.66)
+            
+            -- Wait and release character
+            task.wait(2)
+            HRP.Anchored = false
+            HUM.WalkSpeed = originalWalkSpeed
+        end
+    end
+)
+
+local TrainButton = createButton(
+    "Train", 
+    "TP to Train", 
+    "Teleports you to the train seat (Teams must leave the seat before clicking this button)",
+    UDim2.new(0, 0, 0, 60),
+    UDim2.new(1, -10, 0, 50), -- Adjusted width to fit in scrolling frame
+    function()
+        local Character = Player.Character
+        if Character and Character:FindFirstChild("HumanoidRootPart") then
+            local HRP = Character.HumanoidRootPart
+            
+            -- UPDATED PATH: Workspace > Train > TrainControls > ConductorSeat > VehicleSeat
+            local conductorSeat = nil
+            
+            -- Try the exact path first
+            if workspace:FindFirstChild("Train") and 
+               workspace.Train:FindFirstChild("TrainControls") and
+               workspace.Train.TrainControls:FindFirstChild("ConductorSeat") and
+               workspace.Train.TrainControls.ConductorSeat:FindFirstChild("VehicleSeat") then
+                conductorSeat = workspace.Train.TrainControls.ConductorSeat.VehicleSeat
+            end
+            
+            -- If ConductorSeat is found, teleport to it
+            if conductorSeat then
+                -- Anchor character to prevent bouncing/teleporting back
+                HRP.Anchored = true
+                
+                -- Use CFrame for teleportation
+                HRP.CFrame = conductorSeat.CFrame + Vector3.new(0, 3, 0) -- Offset to position above chair
+                
+                -- Unanchor after 1 second
+                task.delay(0.15, function()
+                    if HRP and HRP.Anchored then
+                        HRP.Anchored = false
+                    end
+                end)
+                
+                -- Safety unanchor (in case the first one fails)
+                task.delay(0.1, function()
+                    if HRP and HRP.Anchored then
+                        HRP.Anchored = false
+                    end
+                end)
+            end
+        end
+    end
+)
+
+-- Create Aimbot Mobs Button
+local AimbotButton = createButton(
+    "AimbotMobs",
+    "Aimbot Mobs",
+    "Spectate mobs",
+    UDim2.new(0, 0, 0, 120),
+    UDim2.new(1, -10, 0, 50),
+    function()
+        loadstring(game:HttpGet("https://pastebin.com/raw/q0mvquNu"))()
+    end
+)
+
+-- Noclip variables
+local NoclipActive = false
+local NoclipConnection
+
+-- Function to activate noclip
+local function enableNoclip()
+    if NoclipConnection then return end
+    
+    NoclipActive = true
+    
+    NoclipConnection = RunService.Stepped:Connect(function()
+        if not Player.Character then return end
+        
+        for _, part in pairs(Player.Character:GetDescendants()) do
+            if part:IsA("BasePart") and part.CanCollide then
+                part.CanCollide = false
+            end
+        end
+    end)
+end
+
+-- Function to deactivate noclip
+local function disableNoclip()
+    if NoclipConnection then
+        NoclipConnection:Disconnect()
+        NoclipConnection = nil
+    end
+    
+    NoclipActive = false
+    
+    if Player.Character then
+        for _, part in pairs(Player.Character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = true
+            end
+        end
+    end
+end
+
+-- Create Noclip Toggle Button
+local NoclipButton, _, isNoclipToggled = createButton(
+    "Noclip",
+    "Noclip",
+    "Walk through walls",
+    UDim2.new(0, 0, 0, 180),
+    UDim2.new(1, -10, 0, 50),
+    function(toggled)
+        if toggled then
+            enableNoclip()
+        else
+            disableNoclip()
+        end
+    end,
+    true -- This is a toggle button
+)
+
+-- 3rd Person Camera Variables
+local ThirdPersonActive = false
+local OriginalCameraMaxZoom = nil
+local CameraUpdateConnection = nil
+local OriginalCameraType = nil
+
+-- COMPLETELY FIXED: 3rd person camera with proper toggle between 1st and 3rd person
+-- Function to enable 3rd person camera
+local function enable3rdPerson()
+    ThirdPersonActive = true
+    
+    -- Store original camera type and properties
+    OriginalCameraType = workspace.CurrentCamera.CameraType
+    OriginalCameraMaxZoom = Player.CameraMaxZoomDistance
+    
+    -- Set camera properties for third person
+    workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
+    Player.CameraMode = Enum.CameraMode.Classic
+    Player.CameraMaxZoomDistance = 100 -- Allow zooming out very far
+    Player.CameraMinZoomDistance = 0.5 -- Allow zooming in close
+    
+    -- Force the camera to update
+    if CameraUpdateConnection then
+        CameraUpdateConnection:Disconnect()
+    end
+    
+    CameraUpdateConnection = RunService.RenderStepped:Connect(function()
+        if not ThirdPersonActive then return end
+        
+        if workspace.CurrentCamera.CameraType ~= Enum.CameraType.Custom then
+            workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
+        end
+        
+        if Player.CameraMode ~= Enum.CameraMode.Classic then
+            Player.CameraMode = Enum.CameraMode.Classic
+        end
+    end)
+end
+
+-- Function to disable 3rd person camera (return to first person)
+local function disable3rdPerson()
+    ThirdPersonActive = false
+    
+    -- Disconnect the camera update
+    if CameraUpdateConnection then
+        CameraUpdateConnection:Disconnect()
+        CameraUpdateConnection = nil
+    end
+    
+    -- Restore first person view
+    workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
+    Player.CameraMode = Enum.CameraMode.LockFirstPerson
+    
+    -- Force camera to first person
+    Player.CameraMaxZoomDistance = 0.5
+    Player.CameraMinZoomDistance = 0.5
+    
+    -- Set up a temporary connection to ensure first person sticks
+    local tempConnection
+    tempConnection = RunService.RenderStepped:Connect(function()
+        if Player.CameraMode ~= Enum.CameraMode.LockFirstPerson then
+            Player.CameraMode = Enum.CameraMode.LockFirstPerson
+        end
+        
+        if Player.CameraMaxZoomDistance ~= 0.5 then
+            Player.CameraMaxZoomDistance = 0.5
+        end
+        
+        task.wait(0.1) -- Wait 1 second to ensure settings stick
+        if tempConnection then
+            tempConnection:Disconnect()
+            tempConnection = nil
+        end
+    end)
+end
+
+-- Create 3rd Person Toggle Button
+local ThirdPersonButton, _, isThirdPersonToggled = createButton(
+    "ThirdPerson",
+    "3rd Person",
+    "Unlocks 3rd Person Pov",
+    UDim2.new(0, 0, 0, 240),
+    UDim2.new(1, -10, 0, 50),
+    function(toggled)
+        if toggled then
+            enable3rdPerson()
+        else
+            disable3rdPerson()
+        end
+    end,
+    true -- This is a toggle button
+)
+
+-- ESP Variables and Functions
+local Players = game:GetService("Players")
+
+-- Player ESP variables
+local PlayerESPActive = false
+local PlayerESPItems = {}
+local DeadPlayers = {}
+
+-- Mob ESP variables
+local MobESPActive = false
+local MobESPItems = {}
+local DeadMobs = {}
+
+-- Item ESP Variables
+local ItemESPActive = false
+local ItemESPItems = {}
+
+-- Function to create ESP for a player
+local function createPlayerESP(player)
+    if player == Player or not player.Character then return end
+    if PlayerESPItems[player] then return end
+    
+    local character = player.Character
+    local highlightClone = Instance.new("Highlight")
+    highlightClone.Name = "ESP_Highlight"
+    highlightClone.FillColor = Color3.fromRGB(0, 255, 0) -- Green color
+    highlightClone.OutlineColor = Color3.fromRGB(0, 255, 0)
+    highlightClone.FillTransparency = 0.5
+    highlightClone.OutlineTransparency = 0
+    highlightClone.Parent = character
+    
+    -- Create name label
+    local nameLabel = Instance.new("BillboardGui")
+    nameLabel.Name = "ESP_NameLabel"
+    nameLabel.Size = UDim2.new(0, 200, 0, 50)
+    nameLabel.StudsOffset = Vector3.new(0, 3, 0)
+    nameLabel.AlwaysOnTop = true
+    nameLabel.Parent = character.Head
+    
+    local nameText = Instance.new("TextLabel")
+    nameText.Name = "ESP_PlayerName"
+    nameText.Size = UDim2.new(1, 0, 1, 0)
+    nameText.BackgroundTransparency = 1
+    nameText.Text = player.Name
+    nameText.TextColor3 = Color3.fromRGB(0, 255, 0)
+    nameText.TextStrokeTransparency = 0.3
+    nameText.TextSize = 18
+    nameText.Font = Enum.Font.GothamBold
+    nameText.Parent = nameLabel
+    
+    -- Store the ESP items for later removal
+    PlayerESPItems[player] = {
+        highlight = highlightClone,
+        nameLabel = nameLabel
+    }
+    
+    -- Handle player death
+    if character:FindFirstChildOfClass("Humanoid") then
+        character:FindFirstChildOfClass("Humanoid").Died:Connect(function()
+            if PlayerESPItems[player] and PlayerESPItems[player].highlight then
+                PlayerESPItems[player].highlight:Destroy()
+                PlayerESPItems[player].highlight = nil
+            end
+            
+            -- Add skull emoji for dead player
+            if PlayerESPItems[player] and PlayerESPItems[player].nameLabel then
+                local nameText = PlayerESPItems[player].nameLabel:FindFirstChild("ESP_PlayerName")
+                if nameText then
+                    nameText.Text = "💀" .. player.Name
+                end
+            end
+            
+            -- Mark player as dead
+            DeadPlayers[player] = true
+        end)
+    end
+    
+    -- Handle character changes (respawn)
+    player.CharacterAdded:Connect(function(newCharacter)
+        if PlayerESPActive and DeadPlayers[player] then
+            DeadPlayers[player] = nil
+            -- Remove old ESP
+            if PlayerESPItems[player] then
+                if PlayerESPItems[player].highlight then
+                    PlayerESPItems[player].highlight:Destroy()
+                end
+                if PlayerESPItems[player].nameLabel then
+                    PlayerESPItems[player].nameLabel:Destroy()
+                end
+                PlayerESPItems[player] = nil
+            end
+            
+            -- Create new ESP after character loads
+            task.wait(0.5)
+            createPlayerESP(player)
+        end
+    end)
+end
+
+-- Function to remove ESP from a player
+local function removePlayerESP(player)
+    if PlayerESPItems[player] then
+        if PlayerESPItems[player].highlight then
+            PlayerESPItems[player].highlight:Destroy()
+        end
+        if PlayerESPItems[player].nameLabel then
+            PlayerESPItems[player].nameLabel:Destroy()
+        end
+        PlayerESPItems[player] = nil
+    end
+end
+
+-- Function to create ESP for all players
+local function enablePlayerESP()
+    PlayerESPActive = true
+    
+    -- Create ESP for existing players
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= Player and not DeadPlayers[player] then
+            createPlayerESP(player)
+        end
+    end
+    
+    -- Handle new players joining
+    Players.PlayerAdded:Connect(function(player)
+        if PlayerESPActive and player ~= Player then
+            player.CharacterAdded:Wait()
+            task.wait(0.5) -- Wait for character to load
+            createPlayerESP(player)
+        end
+    end)
+    
+    -- Handle players leaving
+    Players.PlayerRemoving:Connect(function(player)
+        removePlayerESP(player)
+        DeadPlayers[player] = nil
+    end)
+end
+
+-- Function to disable ESP for all players
+local function disablePlayerESP()
+    PlayerESPActive = false
+    
+    -- Remove ESP from all players
+    for player, _ in pairs(PlayerESPItems) do
+        removePlayerESP(player)
+    end
+end
+
+-- Function to create ESP for a mob
+local function createMobESP(mob, isDead)
+    if MobESPItems[mob] then 
+        -- If the mob already has ESP but its death state changed, update the label
+        if isDead and not MobESPItems[mob].isDead then
+            if MobESPItems[mob].nameLabel then
+                local nameText = MobESPItems[mob].nameLabel:FindFirstChild("ESP_MobName")
+                if nameText then
+                    nameText.Text = "Dead " .. mob.Name
+                    nameText.TextColor3 = Color3.fromRGB(100, 100, 100)
+                end
+            end
+            MobESPItems[mob].isDead = true
+            -- Change color to indicate dead status
+            if MobESPItems[mob].highlight then
+                MobESPItems[mob].highlight.FillColor = Color3.fromRGB(100, 100, 100) -- Gray color for dead
+                MobESPItems[mob].highlight.OutlineColor = Color3.fromRGB(100, 100, 100)
+            end
+        end
+        return 
+    end
+    
+    -- Check if it's a valid mob (has a humanoid but is not a player character)
+    local humanoid = mob:FindFirstChildOfClass("Humanoid")
+    if not humanoid and not isDead then return end
+    
+    -- Skip if it's a player character
+    for _, player in pairs(Players:GetPlayers()) do
+        if player.Character == mob then return end
+    end
+    
+    -- Create highlight
+    local highlightClone = Instance.new("Highlight")
+    highlightClone.Name = "ESP_Highlight"
+    
+    if isDead then
+        highlightClone.FillColor = Color3.fromRGB(100, 100, 100) -- Gray color for dead
+        highlightClone.OutlineColor = Color3.fromRGB(100, 100, 100)
+    else
+        highlightClone.FillColor = Color3.fromRGB(255, 0, 0) -- Red color for alive
+        highlightClone.OutlineColor = Color3.fromRGB(255, 0, 0)
+    end
+    
+    highlightClone.FillTransparency = 0.5
+    highlightClone.OutlineTransparency = 0
+    highlightClone.Parent = mob
+    
+    -- Determine mob name with Dead prefix if needed
+    local mobName = isDead and "Dead " .. mob.Name or mob.Name
+    
+    -- Create name label
+    local headPart = mob:FindFirstChild("Head")
+    
+    -- If no head is found, try to find another suitable part
+    if not headPart then
+        for _, part in pairs(mob:GetChildren()) do
+            if part:IsA("BasePart") then
+                headPart = part
+                break
+            end
+        end
+    end
+    
+    if headPart then
+        local nameLabel = Instance.new("BillboardGui")
+        nameLabel.Name = "ESP_NameLabel"
+        nameLabel.Size = UDim2.new(0, 200, 0, 50)
+        nameLabel.StudsOffset = Vector3.new(0, 3, 0)
+        nameLabel.AlwaysOnTop = true
+        nameLabel.Parent = headPart
+        
+        local nameText = Instance.new("TextLabel")
+        nameText.Name = "ESP_MobName"
+        nameText.Size = UDim2.new(1, 0, 1, 0)
+        nameText.BackgroundTransparency = 1
+        nameText.Text = mobName
+        nameText.TextColor3 = isDead and Color3.fromRGB(100, 100, 100) or Color3.fromRGB(255, 0, 0)
+        nameText.TextStrokeTransparency = 0.3
+        nameText.TextSize = 18
+        nameText.Font = Enum.Font.GothamBold
+        nameText.Parent = nameLabel
+        
+        -- Store ESP items for later removal
+        MobESPItems[mob] = {
+            highlight = highlightClone,
+            nameLabel = nameLabel,
+            isDead = isDead
+        }
+    else
+        -- No head, just store the highlight
+        MobESPItems[mob] = {
+            highlight = highlightClone,
+            nameLabel = nil,
+            isDead = isDead
+        }
+    end
+    
+    -- Handle mob death
+    if humanoid and not isDead then
+        humanoid.Died:Connect(function()
+            -- Mark mob as dead but keep ESP active
+            DeadMobs[mob] = true
+            
+            -- Update ESP to show dead status
+            if MobESPItems[mob] then
+                if MobESPItems[mob].highlight then
+                    MobESPItems[mob].highlight.FillColor = Color3.fromRGB(100, 100, 100)
+                    MobESPItems[mob].highlight.OutlineColor = Color3.fromRGB(100, 100, 100)
+                end
+                
+                if MobESPItems[mob].nameLabel then
+                    local nameText = MobESPItems[mob].nameLabel:FindFirstChild("ESP_MobName")
+                    if nameText then
+                        nameText.Text = "Dead " .. mob.Name
+                        nameText.TextColor3 = Color3.fromRGB(100, 100, 100)
+                    end
+                end
+                
+                MobESPItems[mob].isDead = true
+            end
+        end)
+    end
+    
+    -- Additional check for health changed to catch deaths that don't trigger the Died event
+    if humanoid and not isDead then
+        humanoid:GetPropertyChangedSignal("Health"):Connect(function()
+            if humanoid.Health <= 0 and not MobESPItems[mob].isDead then
+                -- Mark mob as dead but keep ESP active
+                DeadMobs[mob] = true
+                
+                -- Update ESP to show dead status
+                if MobESPItems[mob] then
+                    if MobESPItems[mob].highlight then
+                        MobESPItems[mob].highlight.FillColor = Color3.fromRGB(100, 100, 100)
+                        MobESPItems[mob].highlight.OutlineColor = Color3.fromRGB(100, 100, 100)
+                    end
+                    
+                    if MobESPItems[mob].nameLabel then
+                        local nameText = MobESPItems[mob].nameLabel:FindFirstChild("ESP_MobName")
+                        if nameText then
+                            nameText.Text = "Dead " .. mob.Name
+                            nameText.TextColor3 = Color3.fromRGB(100, 100, 100)
+                        end
+                    end
+                    
+                    MobESPItems[mob].isDead = true
+                end
+            end
+        end)
+    end
+end
+
+-- Function to remove ESP from a mob
+local function removeMobESP(mob)
+    if MobESPItems[mob] then
+        if MobESPItems[mob].highlight then
+            MobESPItems[mob].highlight:Destroy()
+        end
+        if MobESPItems[mob].nameLabel then
+            MobESPItems[mob].nameLabel:Destroy()
+        end
+        MobESPItems[mob] = nil
+    end
+end
+
+-- Function to scan for mobs in the workspace
+local function scanForMobs()
+    -- Search the specified paths for enemies
+    local enemyPaths = {
+        "RuntimeEntities",
+        "RuntimeEnemies",
+        "Enemy",
+        "Enemies",
+        "Entities",
+        "RuntimeMonster",
+        "NightEnemies",
+        "NightMonster",
+        "Monster",
+        "NightEntities",
+        "Outlaw" -- Added Outlaw to the paths
+    }
+    
+    local foundAnyEnemies = false
+    
+    -- Check each potential enemy folder
+    for _, path in ipairs(enemyPaths) do
+        local folder = workspace:FindFirstChild(path)
+        if folder then
+            foundAnyEnemies = true
+            -- Process all enemies in the folder
+            for _, enemy in pairs(folder:GetDescendants()) do
+                if enemy:IsA("Model") then
+                    local humanoid = enemy:FindFirstChildOfClass("Humanoid")
+                    local isDead = (humanoid and humanoid.Health <= 0) or DeadMobs[enemy]
+                    
+                    -- Create ESP for both alive and dead enemies
+                    createMobESP(enemy, isDead)
+                end
+            end
+        end
+    end
+    
+    -- Special case for Entities > Outlaw path
+    local entitiesFolder = workspace:FindFirstChild("Entities")
+    if entitiesFolder then
+        local outlawFolder = entitiesFolder:FindFirstChild("Outlaw")
+        if outlawFolder then
+            foundAnyEnemies = true
+            -- Process all outlaws in the folder
+            for _, outlaw in pairs(outlawFolder:GetDescendants()) do
+                if outlaw:IsA("Model") then
+                    local humanoid = outlaw:FindFirstChildOfClass("Humanoid")
+                    local isDead = (humanoid and humanoid.Health <= 0) or DeadMobs[outlaw]
+                    
+                    -- Create ESP for both alive and dead outlaws
+                    createMobESP(outlaw, isDead)
+                end
+            end
+        end
+    end
+    
+    -- If no enemies found in specific paths, try default locations
+    if not foundAnyEnemies then
+        local defaultFolders = {}
+        
+        if workspace:FindFirstChild("Mobs") then
+            table.insert(defaultFolders, workspace.Mobs)
+            foundAnyEnemies = true
+        end
+        
+        if workspace:FindFirstChild("NPCs") then
+            table.insert(defaultFolders, workspace.NPCs)
+            foundAnyEnemies = true
+        end
+        
+        -- Scan the default mob folders
+        for _, folder in ipairs(defaultFolders) do
+            for _, mob in pairs(folder:GetDescendants()) do
+                if mob:IsA("Model") then
+                    local humanoid = mob:FindFirstChildOfClass("Humanoid")
+                    local isDead = (humanoid and humanoid.Health <= 0) or DeadMobs[mob]
+                    
+                    -- Create ESP for both alive and dead mobs
+                    createMobESP(mob, isDead)
+                end
+            end
+        end
+        
+        -- If still no enemies found, scan all workspace children
+        if not foundAnyEnemies then
+            for _, child in pairs(workspace:GetChildren()) do
+                if child:IsA("Model") then
+                    -- Check if it's not a player character
+                    local isPlayerCharacter = false
+                    for _, player in pairs(Players:GetPlayers()) do
+                        if player.Character == child then
+                            isPlayerCharacter = true
+                            break
+                        end
+                    end
+                    
+                    if not isPlayerCharacter then
+                        local humanoid = child:FindFirstChildOfClass("Humanoid")
+                        local isDead = (humanoid and humanoid.Health <= 0) or DeadMobs[child]
+                        
+                        -- Create ESP for both alive and dead characters
+                        createMobESP(child, isDead)
+                    end
+                end
+            end
+        end
+    end
+end
+
+-- Function to enable ESP for all mobs
+local function enableMobESP()
+    MobESPActive = true
+    
+    -- Initial scan for mobs
+    scanForMobs()
+    
+    -- Set up recurring scan for new mobs
+    spawn(function()
+        while MobESPActive do
+            scanForMobs()
+            task.wait(1) -- Scan every second
+        end
+    end)
+end
+
+-- Function to disable ESP for all mobs
+local function disableMobESP()
+    MobESPActive = false
+    
+    -- Remove ESP from all mobs
+    for mob, _ in pairs(MobESPItems) do
+        removeMobESP(mob)
+    end
+end
+
+-- Function to create ESP for an item
+local function createItemESP(item)
+    if ItemESPItems[item] then return end
+    
+    -- Create highlight
+    local highlightClone = Instance.new("Highlight")
+    highlightClone.Name = "ESP_Highlight"
+    highlightClone.FillColor = Color3.fromRGB(139, 69, 19) -- Brown color
+    highlightClone.OutlineColor = Color3.fromRGB(139, 69, 19)
+    highlightClone.FillTransparency = 0.5
+    highlightClone.OutlineTransparency = 0
+    highlightClone.Parent = item
+    
+    -- Determine item name
+    local itemName = item.Name
+    
+    -- Create name label at the item's primary part or center
+    local attachmentPart = nil
+    
+    if item:IsA("Model") and item.PrimaryPart then
+        -- Use the primary part if it exists
+        attachmentPart = item.PrimaryPart
+    elseif item:IsA("BasePart") then
+        -- If the item is a part, use it directly
+        attachmentPart = item
+    else
+        -- Find the first BasePart to attach the label to
+        for _, part in pairs(item:GetChildren()) do
+            if part:IsA("BasePart") then
+                attachmentPart = part
+                break
+            end
+        end
+    end
+    
+    -- If we found a part to attach to, create the label
+    if attachmentPart then
+        local nameLabel = Instance.new("BillboardGui")
+        nameLabel.Name = "ESP_NameLabel"
+        nameLabel.Size = UDim2.new(0, 200, 0, 50)
+        nameLabel.StudsOffset = Vector3.new(0, 2, 0)
+        nameLabel.AlwaysOnTop = true
+        nameLabel.Parent = attachmentPart
+        
+        local nameText = Instance.new("TextLabel")
+        nameText.Name = "ESP_ItemName"
+        nameText.Size = UDim2.new(1, 0, 1, 0)
+        nameText.BackgroundTransparency = 1
+        nameText.Text = itemName
+        nameText.TextColor3 = Color3.fromRGB(139, 69, 19) -- Brown color
+        nameText.TextStrokeTransparency = 0.3
+        nameText.TextSize = 18
+        nameText.Font = Enum.Font.GothamBold
+        nameText.Parent = nameLabel
+        
+        -- Store ESP items for later removal
+        ItemESPItems[item] = {
+            highlight = highlightClone,
+            nameLabel = nameLabel
+        }
+    else
+        -- No suitable part found, just store the highlight
+        ItemESPItems[item] = {
+            highlight = highlightClone,
+            nameLabel = nil
+        }
+    end
+end
+
+-- Function to remove ESP from an item
+local function removeItemESP(item)
+    if ItemESPItems[item] then
+        if ItemESPItems[item].highlight then
+            ItemESPItems[item].highlight:Destroy()
+        end
+        if ItemESPItems[item].nameLabel then
+            ItemESPItems[item].nameLabel:Destroy()
+        end
+        ItemESPItems[item] = nil
+    end
+end
+
+-- Function to scan for items in the workspace
+local function scanForItems()
+    -- Check for RuntimeItems folder
+    local itemFolder = workspace:FindFirstChild("RuntimeItems")
+    if itemFolder then
+        -- Process only the direct children of the RuntimeItems folder
+        for _, item in pairs(itemFolder:GetChildren()) do
+            -- Only apply ESP to the top-level items (not their children)
+            createItemESP(item)
+        end
+    end
+end
+
+-- Function to enable ESP for all items
+local function enableItemESP()
+    ItemESPActive = true
+    
+    -- Initial scan for items
+    scanForItems()
+    
+    -- Set up recurring scan for new items
+    spawn(function()
+        while ItemESPActive do
+            scanForItems()
+            task.wait(1) -- Scan every second
+        end
+    end)
+    
+    -- Watch for new items being added
+    if workspace:FindFirstChild("RuntimeItems") then
+        workspace.RuntimeItems.ChildAdded:Connect(function(child)
+            if ItemESPActive then
+                -- Wait a short time for the item to fully load
+                task.wait(0.1)
+                -- Only create ESP for the top-level item
+                createItemESP(child)
+            end
+        end)
+        
+        workspace.RuntimeItems.ChildRemoved:Connect(function(child)
+            removeItemESP(child)
+        end)
+    end
+end
+
+-- Function to disable ESP for all items
+local function disableItemESP()
+    ItemESPActive = false
+    
+    -- Remove ESP from all items
+    for item, _ in pairs(ItemESPItems) do
+        removeItemESP(item)
+    end
+end
+
+-- Create ESP Players Button
+local ESPPlayersButton, _, isESPPlayersToggled = createButton(
+    "ESPPlayers",
+    "ESP Players",
+    "Esp all players and Esp if their Dead💀",
+    UDim2.new(0, 0, 0, 300),
+    UDim2.new(1, -10, 0, 50),
+    function(toggled)
+        if toggled then
+            enablePlayerESP()
+        else
+            disablePlayerESP()
+        end
+    end,
+    true -- This is a toggle button
+)
+
+-- Create ESP Mobs Button
+local ESPMobsButton, _, isESPMobsToggled = createButton(
+    "ESPMobs",
+    "ESP Mobs",
+    "Esp all mobs (excludes dead mobs)",
+    UDim2.new(0, 0, 0, 360),
+    UDim2.new(1, -10, 0, 50),
+    function(toggled)
+        if toggled then
+            enableMobESP()
+        else
+            disableMobESP()
+        end
+    end,
+    true -- This is a toggle button
+)
+
+-- Toggle button for Item ESP
+local ESPItemsButton, _, isESPItemsToggled = createButton(
+    "ESPItems",
+    "ESP Items",
+    "Esp all items in RuntimeItems",
+    UDim2.new(0, 0, 0, 420), -- Position below the Mob ESP button
+    UDim2.new(1, -10, 0, 50),
+    function(toggled)
+        if toggled then
+            enableItemESP()
+        else
+            disableItemESP()
+        end
+    end,
+    true -- This is a toggle button
+)
+
+-- Full Bright Variables
+local FullBrightActive = false
+local OriginalBrightness
+local OriginalClockTime
+local OriginalAmbient
+local OriginalOutdoorAmbient
+local OriginalFogEnd
+local LightingConnection
+
+-- Function to enable Full Bright
+local function enableFullBright()
+    FullBrightActive = true
+    
+    -- Store original lighting settings
+    OriginalBrightness = Lighting.Brightness
+    OriginalClockTime = Lighting.ClockTime
+    OriginalAmbient = Lighting.Ambient
+    OriginalOutdoorAmbient = Lighting.OutdoorAmbient
+    OriginalFogEnd = Lighting.FogEnd
+    
+    -- Apply full bright settings
+    Lighting.Brightness = 2
+    Lighting.ClockTime = 14 -- Midday
+    Lighting.Ambient = Color3.fromRGB(255, 255, 255)
+    Lighting.OutdoorAmbient = Color3.fromRGB(255, 255, 255)
+    Lighting.FogEnd = 100000
+    
+    -- Set up a connection to prevent the game from changing lighting
+    LightingConnection = RunService.Heartbeat:Connect(function()
+        Lighting.Brightness = 2
+        Lighting.ClockTime = 14
+    end)
+end
+
+-- Function to disable Full Bright
+local function disableFullBright()
+    FullBrightActive = false
+    
+    -- Disconnect lighting update
+    if LightingConnection then
+        LightingConnection:Disconnect()
+        LightingConnection = nil
+    end
+    
+    -- Restore original lighting settings
+    Lighting.Brightness = OriginalBrightness
+    Lighting.ClockTime = OriginalClockTime
+    Lighting.Ambient = OriginalAmbient
+    Lighting.OutdoorAmbient = OriginalOutdoorAmbient
+    Lighting.FogEnd = OriginalFogEnd
+end
+
+-- Create Full Bright Button
+local FullBrightButton, _, isFullBrightToggled = createButton(
+    "FullBright",
+    "Full Bright",
+    "Full brightness, allows you to see at night",
+    UDim2.new(0, 0, 0, 480),
+    UDim2.new(1, -10, 0, 50),
+    function(toggled)
+        if toggled then
+            enableFullBright()
+        else
+            disableFullBright()
+        end
+    end,
+    true -- This is a toggle button
+)
+
+-- Instant Interact Variables
+local InstantInteractActive = false
+local OriginalInteractTimes = {}
+
+-- Function to enable instant interact
+local function enableInstantInteract()
+    InstantInteractActive = true
+    
+    -- Handle ProximityPrompts
+    for _, prompt in pairs(workspace:GetDescendants()) do
+        if prompt:IsA("ProximityPrompt") then
+            -- Store original values if not already stored
+            if not OriginalInteractTimes[prompt] then
+                OriginalInteractTimes[prompt] = {
+                    holdDuration = prompt.HoldDuration,
+                    maxActivationDistance = prompt.MaxActivationDistance
+                }
+            end
+            
+            -- Apply instant interaction
+            prompt.HoldDuration = 0.001 -- 0.1ms
+            prompt.MaxActivationDistance = prompt.MaxActivationDistance * 1.5 -- Increase interaction distance
+        end
+        
+        if prompt:IsA("ClickDetector") then
+            -- Store original values if not already stored
+            if not OriginalInteractTimes[prompt] then
+                OriginalInteractTimes[prompt] = {
+                    maxActivationDistance = prompt.MaxActivationDistance
+                }
+            end
+            
+            -- Apply increased interaction distance
+            prompt.MaxActivationDistance = prompt.MaxActivationDistance * 1.5
+        end
+    end
+    
+    -- Monitor for new prompts being added
+    workspace.DescendantAdded:Connect(function(descendant)
+        if not InstantInteractActive then return end
+        
+        if descendant:IsA("ProximityPrompt") then
+            -- Store original values
+            OriginalInteractTimes[descendant] = {
+                holdDuration = descendant.HoldDuration,
+                maxActivationDistance = descendant.MaxActivationDistance
+            }
+            
+            -- Apply instant interaction
+            descendant.HoldDuration = 0.001 -- 0.1ms
+            descendant.MaxActivationDistance = descendant.MaxActivationDistance * 1.5
+        end
+        
+        if descendant:IsA("ClickDetector") then
+            -- Store original values
+            OriginalInteractTimes[descendant] = {
+                maxActivationDistance = descendant.MaxActivationDistance
+            }
+            
+            -- Apply increased interaction distance
+            descendant.MaxActivationDistance = descendant.MaxActivationDistance * 1.5
+        end
+    end)
+end
+
+-- Function to disable instant interact
+local function disableInstantInteract()
+    InstantInteractActive = false
+    
+    -- Restore original values
+    for object, originalValues in pairs(OriginalInteractTimes) do
+        if object:IsA("ProximityPrompt") and object:IsDescendantOf(game) then
+            object.HoldDuration = originalValues.holdDuration
+            object.MaxActivationDistance = originalValues.maxActivationDistance
+        elseif object:IsA("ClickDetector") and object:IsDescendantOf(game) then
+            object.MaxActivationDistance = originalValues.maxActivationDistance
+        end
+    end
+end
+
+-- Toggle button for Instant Interact
+local InstantInteractButton, _, isInstantInteractToggled = createButton(
+    "InstantInteract",
+    "Instant Interact",
+    "No delay for interactions, pick up or use items instantly",
+    UDim2.new(0, 0, 0, 540), -- Position below other buttons
+    UDim2.new(1, -10, 0, 50),
+    function(toggled)
+        if toggled then
+            enableInstantInteract()
+        else
+            disableInstantInteract()
+        end
+    end,
+    true -- This is a toggle button
+)
+
+-- Variables for Auto-Pickup features
+local AutoPickupBondsActive = false
+local AutoPickupAmmoActive = false
+local AutoPickupMoneyActive = false
+local SpectateItemsActive = false
+local SpectateItemsFrame = nil
+local CurrentSpectateIndex = 1
+local SpectateItems = {}
+
+-- Function to find player character
+local function getPlayerCharacter()
+    local player = game.Players.LocalPlayer
+    if player and player.Character then
+        return player.Character
+    end
+    return nil
+end
+
+-- Function to get character root part
+local function getCharacterRootPart()
+    local character = getPlayerCharacter()
+    if character then
+        return character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Torso") or character.PrimaryPart
+    end
+    return nil
+end
+
+-- Function to get distance between two positions
+local function getDistance(pos1, pos2)
+    return (pos1 - pos2).Magnitude
+end
+
+-- Function to pick up an item (using different methods based on game mechanics)
+local function pickupItem(item)
+    -- Method 1: Try using a RemoteEvent (common in many games)
+    local commonRemoteNames = {
+        "PickupItem", "CollectItem", "GrabItem", 
+        "PickUp", "Collect", "collect", "pickup", "Grab", "grab",
+        "ItemPickup", "ItemCollect", "ItemGrab",
+        "PickupObject", "CollectObject", "GrabObject", "Pickup",
+        "GrabItem", "GrabItem", "grabitem", "grabItem", "grabobject",
+        "Grabobject", "OnjectGrab", "collectitem", "Collectitem",
+        "collectitem", "Getitem"
+    }
+    
+    for _, name in ipairs(commonRemoteNames) do
+        local remoteEvent = game:GetService("ReplicatedStorage"):FindFirstChild(name)
+        if remoteEvent and remoteEvent:IsA("RemoteEvent") then
+            remoteEvent:FireServer(item)
+            return
+        end
+    end
+    
+    -- Also search deeper in ReplicatedStorage for remote events
+    for _, obj in pairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
+        if obj:IsA("RemoteEvent") then
+            local name = obj.Name:lower()
+            if name:find("pickup") or name:find("collect") or name:find("grab") then
+                obj:FireServer(item)
+                return
+            end
+        end
+    end
+    
+    -- Method 2: Try using ProximityPrompt if it exists
+    local prompt = item:FindFirstChildOfClass("ProximityPrompt")
+    if prompt then
+        fireproximityprompt(prompt)
+        return
+    end
+    
+    -- Method 3: Try touching the item (common pickup mechanic)
+    local rootPart = getCharacterRootPart()
+    if rootPart then
+        -- Store original position
+        local originalPos = rootPart.CFrame
+        
+        -- Find the part to touch
+        local partToTouch = nil
+        if item:IsA("BasePart") then
+            partToTouch = item
+        elseif item:IsA("Model") and item.PrimaryPart then
+            partToTouch = item.PrimaryPart
+        else
+            -- Find any part
+            for _, part in pairs(item:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    partToTouch = part
+                    break
+                end
+            end
+        end
+        
+        if partToTouch then
+            -- Teleport to the item briefly
+            local targetCFrame = partToTouch.CFrame
+            rootPart.CFrame = targetCFrame
+            wait(0.1) -- Allow time for pickup to register
+            rootPart.CFrame = originalPos -- Return to original position
+        end
+    end
+    
+    -- Method 4: Try invoking a ClickDetector if it exists
+    local clickDetector = item:FindFirstChildOfClass("ClickDetector")
+    if clickDetector then
+        fireclickdetector(clickDetector)
+        return
+    end
+end
+
+-- Function to create the spectate UI
+local function createSpectateUI()
+    if SpectateItemsFrame then return end
+    
+    -- Create main frame
+    local playerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "SpectateItemsGUI"
+    screenGui.ResetOnSpawn = false
+    screenGui.Parent = playerGui
+    
+    -- Create the main frame
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Name = "SpectateItemsFrame"
+    mainFrame.Size = UDim2.new(0, 300, 0, 50)
+    mainFrame.Position = UDim2.new(0.5, -150, 0, 10)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    mainFrame.BackgroundTransparency = 0.2
+    mainFrame.BorderSizePixel = 0
+    mainFrame.AnchorPoint = Vector2.new(0.5, 0)
+    
+    -- Add rounded corners
+    local uiCorner = Instance.new("UICorner")
+    uiCorner.CornerRadius = UDim.new(0, 10)
+    uiCorner.Parent = mainFrame
+    
+    -- Create item name label
+    local itemNameLabel = Instance.new("TextLabel")
+    itemNameLabel.Name = "ItemName"
+    itemNameLabel.Size = UDim2.new(0.8, 0, 1, 0)
+    itemNameLabel.Position = UDim2.new(0.1, 0, 0, 0)
+    itemNameLabel.BackgroundTransparency = 1
+    itemNameLabel.Text = "No item selected"
+    itemNameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    itemNameLabel.TextSize = 18
+    itemNameLabel.Font = Enum.Font.GothamBold
+    itemNameLabel.Parent = mainFrame
+    
+    -- Create previous button
+    local prevButton = Instance.new("TextButton")
+    prevButton.Name = "PrevButton"
+    prevButton.Size = UDim2.new(0.1, 0, 1, 0)
+    prevButton.Position = UDim2.new(0, 0, 0, 0)
+    prevButton.BackgroundTransparency = 1
+    prevButton.Text = "<"
+    prevButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    prevButton.TextSize = 24
+    prevButton.Font = Enum.Font.GothamBold
+    prevButton.Parent = mainFrame
+    
+    -- Create next button
+    local nextButton = Instance.new("TextButton")
+    nextButton.Name = "NextButton"
+    nextButton.Size = UDim2.new(0.1, 0, 1, 0)
+    nextButton.Position = UDim2.new(0.9, 0, 0, 0)
+    nextButton.BackgroundTransparency = 1
+    nextButton.Text = ">"
+    nextButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    nextButton.TextSize = 24
+    nextButton.Font = Enum.Font.GothamBold
+    nextButton.Parent = mainFrame
+    
+    -- Add animation for showing frame
+    mainFrame.Position = UDim2.new(0.5, -150, -0.1, 0)
+    mainFrame.Parent = screenGui
+    
+    -- Animate in
+    local tweenService = game:GetService("TweenService")
+    local tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+    local tween = tweenService:Create(mainFrame, tweenInfo, {Position = UDim2.new(0.5, -150, 0, 10)})
+    tween:Play()
+    
+    -- Set up button functionality
+    prevButton.MouseButton1Click:Connect(function()
+        if #SpectateItems > 0 then
+            CurrentSpectateIndex = (CurrentSpectateIndex - 2) % #SpectateItems + 1
+            updateSpectateFrame()
+        end
+    end)
+    
+    nextButton.MouseButton1Click:Connect(function()
+        if #SpectateItems > 0 then
+            CurrentSpectateIndex = CurrentSpectateIndex % #SpectateItems + 1
+            updateSpectateFrame()
+        end
+    end)
+    
+    SpectateItemsFrame = {
+        ScreenGui = screenGui,
+        MainFrame = mainFrame,
+        ItemNameLabel = itemNameLabel
+    }
+end
+
+-- Function to destroy spectate UI
+local function destroySpectateUI()
+    if SpectateItemsFrame then
+        -- Animate out
+        local tweenService = game:GetService("TweenService")
+        local tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+        local tween = tweenService:Create(SpectateItemsFrame.MainFrame, tweenInfo, {Position = UDim2.new(0.5, -150, -0.1, 0)})
+        tween:Play()
+        
+        tween.Completed:Connect(function()
+            if SpectateItemsFrame and SpectateItemsFrame.ScreenGui then
+                SpectateItemsFrame.ScreenGui:Destroy()
+                SpectateItemsFrame = nil
+            end
+        end)
+    end
+end
+
+-- Function to update the spectate frame
+local function updateSpectateFrame()
+    if not SpectateItemsFrame or #SpectateItems == 0 then return end
+    
+    local currentItem = SpectateItems[CurrentSpectateIndex]
+    if currentItem and currentItem:IsA("Instance") and currentItem.Parent then
+        SpectateItemsFrame.ItemNameLabel.Text = currentItem.Name
+        
+        -- Update camera to look at the item
+        local camera = workspace.CurrentCamera
+        if camera then
+            local itemCFrame
+            if currentItem:IsA("Model") and currentItem.PrimaryPart then
+                itemCFrame = currentItem.PrimaryPart.CFrame
+            elseif currentItem:IsA("BasePart") then
+                itemCFrame = currentItem.CFrame
+            else
+                -- Try to find a part to focus on
+                for _, part in pairs(currentItem:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        itemCFrame = part.CFrame
+                        break
+                    end
+                end
+            end
+            
+            if itemCFrame then
+                -- Position camera 10 studs away from the item
+                local lookVector = itemCFrame.LookVector
+                local camPos = itemCFrame.Position - lookVector * 10
+                local camCFrame = CFrame.new(camPos, itemCFrame.Position)
+                
+                -- Smoothly move camera
+                local tweenService = game:GetService("TweenService")
+                local tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out)
+                local tween = tweenService:Create(camera, tweenInfo, {CFrame = camCFrame})
+                tween:Play()
+            end
+        end
+    else
+        -- If the current item is no longer valid, remove it from the list and update
+        table.remove(SpectateItems, CurrentSpectateIndex)
+        if #SpectateItems > 0 then
+            CurrentSpectateIndex = math.min(CurrentSpectateIndex, #SpectateItems)
+            updateSpectateFrame()
+        else
+            SpectateItemsFrame.ItemNameLabel.Text = "No items found"
+        end
+    end
+end
+
+-- Function to scan for items to spectate
+local function scanSpectateItems()
+    SpectateItems = {}
+    
+    local itemFolder = workspace:FindFirstChild("RuntimeItems")
+    if itemFolder then
+        for _, item in pairs(itemFolder:GetChildren()) do
+            table.insert(SpectateItems, item)
+        end
+    end
+    
+    if #SpectateItems > 0 then
+        CurrentSpectateIndex = 1
+        updateSpectateFrame()
+    end
+end
+
+-- Function to enable spectate items
+local function enableSpectateItems()
+    SpectateItemsActive = true
+    
+    -- Create UI
+    createSpectateUI()
+    
+    -- Store the original camera type to restore later
+    local camera = workspace.CurrentCamera
+    local originalCameraType = camera.CameraType
+    camera.CameraType = Enum.CameraType.Scriptable
+    
+    -- Initial scan
+    scanSpectateItems()
+    
+    -- Set up recurring scan
+    spawn(function()
+        while SpectateItemsActive do
+            scanSpectateItems()
+            wait(1)
+        end
+    end)
+    
+    -- Return function to restore camera
+    return function()
+        if camera then
+            camera.CameraType = originalCameraType
+        end
+    end
+end
+
+-- Function to disable spectate items
+local function disableSpectateItems()
+    SpectateItemsActive = false
+    
+    -- Restore camera
+    local camera = workspace.CurrentCamera
+    if camera then
+        camera.CameraType = Enum.CameraType.Custom
+    end
+    
+    -- Destroy UI
+    destroySpectateUI()
+end
+
+-- Function to enable auto pickup bonds
+local function enableAutoPickupBonds()
+    AutoPickupBondsActive = true
+    
+    spawn(function()
+        while AutoPickupBondsActive do
+            local rootPart = getCharacterRootPart()
+            if rootPart then
+                local itemFolder = workspace:FindFirstChild("RuntimeItems")
+                if itemFolder then
+                    for _, item in pairs(itemFolder:GetChildren()) do
+                        if item.Name == "Bond" and item:IsA("Instance") and item.Parent then
+                            local itemPart = nil
+                            
+                            if item:IsA("Model") and item.PrimaryPart then
+                                itemPart = item.PrimaryPart
+                            elseif item:IsA("BasePart") then
+                                itemPart = item
+                            else
+                                -- Find any part in the item
+                                for _, part in pairs(item:GetDescendants()) do
+                                    if part:IsA("BasePart") then
+                                        itemPart = part
+                                        break
+                                    end
+                                end
+                            end
+                            
+                            if itemPart and getDistance(rootPart.Position, itemPart.Position) <= 100 then
+                                -- Try to pick up the item
+                                pickupItem(item)
+                            end
+                        end
+                    end
+                end
+            end
+            wait(0.5)
+        end
+    end)
+end
+
+-- Function to disable auto pickup bonds
+local function disableAutoPickupBonds()
+    AutoPickupBondsActive = false
+end
+
+-- Function to enable auto pickup ammo
+local function enableAutoPickupAmmo()
+    AutoPickupAmmoActive = true
+    
+    spawn(function()
+        while AutoPickupAmmoActive do
+            local rootPart = getCharacterRootPart()
+            if rootPart then
+                local itemFolder = workspace:FindFirstChild("RuntimeItems")
+                if itemFolder then
+                    for _, item in pairs(itemFolder:GetChildren()) do
+                        if (item.Name == "RevolverAmmo" or 
+                            item.Name == "RifleAmmo" or 
+                            item.Name == "ShotgunShells") and 
+                            item:IsA("Instance") and item.Parent then
+                            
+                            local itemPart = nil
+                            
+                            if item:IsA("Model") and item.PrimaryPart then
+                                itemPart = item.PrimaryPart
+                            elseif item:IsA("BasePart") then
+                                itemPart = item
+                            else
+                                -- Find any part in the item
+                                for _, part in pairs(item:GetDescendants()) do
+                                    if part:IsA("BasePart") then
+                                        itemPart = part
+                                        break
+                                    end
+                                end
+                            end
+                            
+                            if itemPart and getDistance(rootPart.Position, itemPart.Position) <= 100 then
+                                -- Try to pick up the item
+                                pickupItem(item)
+                            end
+                        end
+                    end
+                end
+            end
+            wait(0.5)
+        end
+    end)
+end
+
+-- Function to disable auto pickup ammo
+local function disableAutoPickupAmmo()
+    AutoPickupAmmoActive = false
+end
+
+-- Function to enable auto grab money
+local function enableAutoGrabMoney()
+    AutoPickupMoneyActive = true
+    
+    spawn(function()
+        while AutoPickupMoneyActive do
+            local rootPart = getCharacterRootPart()
+            if rootPart then
+                local itemFolder = workspace:FindFirstChild("RuntimeItems")
+                if itemFolder then
+                    for _, item in pairs(itemFolder:GetChildren()) do
+                        if item.Name == "MoneyBag" and item:IsA("Instance") and item.Parent then
+                            local itemPart = nil
+                            
+                            if item:IsA("Model") and item.PrimaryPart then
+                                itemPart = item.PrimaryPart
+                            elseif item:IsA("BasePart") then
+                                itemPart = item
+                            else
+                                -- Find any part in the item
+                                for _, part in pairs(item:GetDescendants()) do
+                                    if part:IsA("BasePart") then
+                                        itemPart = part
+                                        break
+                                    end
+                                end
+                            end
+                            
+                            if itemPart and getDistance(rootPart.Position, itemPart.Position) <= 50 then
+                                -- Try to pick up the item
+                                pickupItem(item)
+                            end
+                        end
+                    end
+                end
+            end
+            wait(0.5)
+        end
+    end)
+end
+
+-- Function to disable auto grab money
+local function disableAutoGrabMoney()
+    AutoPickupMoneyActive = false
+end
+
+-- Create the toggle buttons
+local AutoPickupBondsButton, _, isAutoPickupBondsToggled = createButton(
+    "AutoPickupBonds",
+    "Auto-Pick Up Bonds",
+    "PickUp bonds within 100 stud and make ur friend cry😭",
+    UDim2.new(0, 0, 0, 600), -- Position below the InstantInteract button
+    UDim2.new(1, -10, 0, 50),
+    function(toggled)
+        if toggled then
+            enableAutoPickupBonds()
+        else
+            disableAutoPickupBonds()
+        end
+    end,
+    true -- This is a toggle button
+)
+
+local AutoPickupAmmoButton, _, isAutoPickupAmmoToggled = createButton(
+    "AutoPickupAmmo",
+    "Auto-Pick Up Ammo",
+    "Auto PickUp Ammo (Steal your friend's Ammo)",
+    UDim2.new(0, 0, 0, 660), -- Position below the AutoPickupBonds button
+    UDim2.new(1, -10, 0, 50),
+    function(toggled)
+        if toggled then
+            enableAutoPickupAmmo()
+        else
+            disableAutoPickupAmmo()
+        end
+    end,
+    true -- This is a toggle button
+)
+
+local AutoGrabMoneyButton, _, isAutoGrabMoneyToggled = createButton(
+    "AutoGrabMoney",
+    "Auto-Grab Money",
+    "Steal someone's MoneyBag💰",
+    UDim2.new(0, 0, 0, 720), -- Position below the AutoPickupAmmo button
+    UDim2.new(1, -10, 0, 50),
+    function(toggled)
+        if toggled then
+            enableAutoGrabMoney()
+        else
+            disableAutoGrabMoney()
+        end
+    end,
+    true -- This is a toggle button
+)
+
+local SpectateItemsButton, _, isSpectateItemsToggled = createButton(
+    "SpectateItems",
+    "Spectate Items",
+    "Spectates Items in range (you can store the item)",
+    UDim2.new(0, 0, 0, 780), -- Position below the AutoGrabMoney button
+    UDim2.new(1, -10, 0, 50),
+    function(toggled)
+        if toggled then
+            local restoreCamera = enableSpectateItems()
+            -- Store the restore function to use when toggling off
+            SpectateItemsButton:SetAttribute("RestoreCameraFunc", restoreCamera)
+        else
+            disableSpectateItems()
+        end
+    end,
+    true -- This is a toggle button
+)
+
+-- Timer functionality
+local timerRunning = true
+local timeLeft = 600
+
+local function updateTimerDisplay()
+    local minutes = math.floor(timeLeft / 60)
+    local seconds = timeLeft % 60
+    TimerLabel.Text = string.format("Bridge Timer: %02d:%02d", minutes, seconds)
+end
+
+-- Start timer countdown
+task.spawn(function()
+    while timerRunning and timeLeft > 0 do
+        updateTimerDisplay()
+        task.wait(1)
+        timeLeft = timeLeft - 1
+    end
+    
+    -- Timer reached zero
+    updateTimerDisplay()
+end)
+
+-- Minimize/Close button functionality
+local isMinimized = false
+
+MinimizeButton.MouseButton1Click:Connect(function()
+    if isMinimized then
+        -- Restore the GUI
+        TweenService:Create(MainFrame, TweenInfo.new(0.3), {
+            Size = UDim2.new(0, 400, 0, 300)
+        }):Play()
+        
+        ButtonsFrame.Visible = true
+        ContentFrame.Visible = true
+        FooterLabel.Visible = true
+        
+        MinimizeButton.Text = "-"
+        isMinimized = false
+    else
+        -- Minimize the GUI
+        TweenService:Create(MainFrame, TweenInfo.new(0.3), {
+            Size = UDim2.new(0, 400, 0, 40)
+        }):Play()
+        
+        ButtonsFrame.Visible = false
+        ContentFrame.Visible = false
+        FooterLabel.Visible = false
+        
+        MinimizeButton.Text = "+"
+        isMinimized = true
+    end
+end)
+
+CloseButton.MouseButton1Click:Connect(function()
+    -- Fade out and destroy the GUI
+    TweenService:Create(MainFrame, TweenInfo.new(0.5), {
+        BackgroundTransparency = 1
+    }):Play()
+    
+    TweenService:Create(TitleBar, TweenInfo.new(0.5), {
+        BackgroundTransparency = 1
+    }):Play()
+    
+    TweenService:Create(TitleText, TweenInfo.new(0.5), {
+        TextTransparency = 1
+    }):Play()
+    
+    TweenService:Create(MinimizeButton, TweenInfo.new(0.5), {
+        TextTransparency = 1
+    }):Play()
+    
+    TweenService:Create(CloseButton, TweenInfo.new(0.5), {
+        TextTransparency = 1
+    }):Play()
+    
+    -- Disable all features if they're active
+    if NoclipActive then
+        disableNoclip()
+    end
+    
+    if ThirdPersonActive then
+        disable3rdPerson()
+    end
+    
+    if PlayerESPActive then
+        disablePlayerESP()
+    end
+    
+    if MobESPActive then
+        disableMobESP()
+    end
+    
+    if ItemESPActive then
+        disableItemESP()
+    end
+    
+    if FullBrightActive then
+        disableFullBright()
+    end
+    
+    if InstantInteractActive then
+        disableInstantInteract()
+    end
+    
+    if AutoPickupBondsActive then
+        disableAutoPickupBonds()
+    end
+    
+    if AutoPickupAmmoActive then
+        disableAutoPickupAmmo()
+    end
+    
+    if AutoGrabMoneyActive then
+        disableAutoGrabMoney()
+    end
+    
+    if SpectateItemsActive then
+        disableSpectateItems()
+    end
+    
+    -- Cleanup and remove GUI
+    task.wait(0.5)
+    ZyviorHub:Destroy()
+    timerRunning = false
+end)
+
+-- Animate the GUI entrance
+MainFrame.Position = UDim2.new(0.5, -200, -0.5, 0)
+TweenService:Create(MainFrame, TweenInfo.new(0.7, Enum.EasingStyle.Bounce), {
+    Position = UDim2.new(0.5, -200, 0.5, -150)
+}):Play()
